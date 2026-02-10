@@ -57,6 +57,35 @@ export class JenkinsClient {
     }
 
     /**
+     * Perform a GET request that returns raw text along with response headers.
+     * Useful for progressive log endpoints that use X-Text-Size / X-More-Data headers.
+     */
+    async getTextWithHeaders(
+        path: string,
+        query?: Record<string, string | number | boolean | undefined | null>
+    ): Promise<{ text: string; headers: Headers }> {
+        const qs = query ? buildQueryString(query) : "";
+        const url = `${this.baseUrl}${path}${qs}`;
+        const logger = getLogger();
+
+        logger.debug(`GET ${url}`);
+
+        const response = await fetch(url, {
+            method: "GET",
+            headers: { Authorization: this.authHeader },
+            signal: AbortSignal.timeout(this.timeout)
+        });
+
+        if (!response.ok) {
+            await this.handleError(response, url);
+        }
+
+        const text = await response.text();
+
+        return { text, headers: response.headers };
+    }
+
+    /**
      * Perform a POST request to the Jenkins API.
      * Returns the response parsed as JSON, or the Location header for build triggers.
      */

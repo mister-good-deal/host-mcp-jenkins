@@ -30,7 +30,7 @@ export function createServer(config: Config): McpServer {
     registerScmTools(server, client);
     registerTestTools(server, client);
 
-    logger.info("All 16 MCP tools registered successfully");
+    logger.info("All 17 MCP tools registered successfully");
 
     return server;
 }

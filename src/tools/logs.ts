@@ -105,6 +105,46 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
         }
     );
 
+    // ── getProgressiveBuildLog ───────────────────────────────────────────
+    server.tool(
+        "getProgressiveBuildLog",
+        "Retrieves build log output incrementally using Jenkins progressive text API. " +
+        "Pass the returned nextByteOffset as the start parameter in subsequent calls to get only new output. " +
+        "Ideal for tailing logs of running builds without re-fetching the entire log.",
+        {
+            jobFullName: z.string().describe("Full name of the Jenkins job"),
+            buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
+            start: z.number().int().min(0).default(0).optional().
+                describe("Byte offset to start from (use nextByteOffset from previous response)")
+        },
+        async({ jobFullName, buildNumber, start = 0 }) => {
+            logger.debug(`getProgressiveBuildLog: ${jobFullName}#${buildNumber ?? "last"}, start=${start}`);
+
+            try {
+                const buildPath = buildNumber ? `/${buildNumber}` : "/lastBuild";
+                const path = `${jobFullNameToPath(jobFullName)}${buildPath}/logText/progressiveText`;
+                const { text, headers } = await client.getTextWithHeaders(path, { start });
+
+                const nextByteOffset = parseInt(headers.get("X-Text-Size") ?? String(start + text.length), 10);
+                const moreData = headers.get("X-More-Data") === "true";
+
+                return toMcpResult(toolSuccess({
+                    text,
+                    nextByteOffset,
+                    moreData
+                }));
+            } catch (error) {
+                if (error instanceof JenkinsClientError && error.statusCode === 404) {
+                    const id = buildNumber ? `${jobFullName}#${buildNumber}` : `${jobFullName} (last build)`;
+
+                    return toMcpResult(toolNotFound("Build", id));
+                }
+
+                throw error;
+            }
+        }
+    );
+
     // ── searchBuildLog ───────────────────────────────────────────────────
     server.tool(
         "searchBuildLog",
