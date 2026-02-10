@@ -16,6 +16,7 @@ export function createMockClient(): jest.Mocked<JenkinsClient> {
     return {
         get: jest.fn(),
         getText: jest.fn(),
+        getTextWithHeaders: jest.fn(),
         post: jest.fn(),
         head: jest.fn()
     } as unknown as jest.Mocked<JenkinsClient>;

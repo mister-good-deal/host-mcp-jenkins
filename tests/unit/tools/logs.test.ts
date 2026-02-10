@@ -70,6 +70,62 @@ describe("Log Tools", () => {
         });
     });
 
+    describe("getProgressiveBuildLog", () => {
+        it("should return progressive log text with offset", async() => {
+            const mockHeaders = new Headers({
+                "X-Text-Size": "256",
+                "X-More-Data": "true"
+            });
+
+            client.getTextWithHeaders.mockResolvedValueOnce({
+                text: "Building step 1...\nBuilding step 2...\n",
+                headers: mockHeaders
+            });
+
+            const handler = toolHandlers.get("getProgressiveBuildLog")!;
+            const result = await handler({ jobFullName: "myJob", buildNumber: 1, start: 0 }) as ReturnType<typeof extractToolResponse>;
+            const response = extractToolResponse(result as never);
+
+            expect(response.status).toBe("COMPLETED");
+            const data = response.result as { text: string; nextByteOffset: number; moreData: boolean };
+
+            expect(data.text).toContain("Building step 1");
+            expect(data.nextByteOffset).toBe(256);
+            expect(data.moreData).toBe(true);
+        });
+
+        it("should report moreData false for completed builds", async() => {
+            const mockHeaders = new Headers({
+                "X-Text-Size": "100"
+            });
+
+            client.getTextWithHeaders.mockResolvedValueOnce({
+                text: "Done\n",
+                headers: mockHeaders
+            });
+
+            const handler = toolHandlers.get("getProgressiveBuildLog")!;
+            const result = await handler({ jobFullName: "myJob", buildNumber: 1, start: 95 }) as ReturnType<typeof extractToolResponse>;
+            const response = extractToolResponse(result as never);
+
+            expect(response.status).toBe("COMPLETED");
+            const data = response.result as { moreData: boolean };
+
+            expect(data.moreData).toBe(false);
+        });
+
+        it("should handle 404", async() => {
+            client.getTextWithHeaders.mockRejectedValueOnce(make404());
+
+            const handler = toolHandlers.get("getProgressiveBuildLog")!;
+            const result = await handler({ jobFullName: "nonexistent", buildNumber: 99 }) as ReturnType<typeof extractToolResponse>;
+            const response = extractToolResponse(result as never);
+
+            expect(response.status).toBe("FAILED");
+            expect(response.message).toContain("not found");
+        });
+    });
+
     describe("searchBuildLog", () => {
         it("should find matching lines", async() => {
             const log = "Start build\nCompiling...\nERROR: something failed\nDone\nERROR: another issue\n";
