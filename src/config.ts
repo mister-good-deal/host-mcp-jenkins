@@ -10,6 +10,8 @@ export interface Config {
     insecure: boolean;
     logLevel: LogLevel;
     timeout: number;
+    maxRetries: number;
+    retryDelay: number;
 }
 
 export function parseConfig(argv: string[] = process.argv): Config {
@@ -48,6 +50,16 @@ export function parseConfig(argv: string[] = process.argv): Config {
             "--timeout <ms>",
             "HTTP request timeout in milliseconds",
             process.env.JENKINS_TIMEOUT ?? "30000"
+        ).
+        option(
+            "--max-retries <count>",
+            "Maximum number of retries for transient errors",
+            process.env.JENKINS_MAX_RETRIES ?? "3"
+        ).
+        option(
+            "--retry-delay <ms>",
+            "Base delay in ms for exponential backoff between retries",
+            process.env.JENKINS_RETRY_DELAY ?? "1000"
         );
 
     program.parse(argv);
@@ -60,7 +72,9 @@ export function parseConfig(argv: string[] = process.argv): Config {
         jenkinsApiToken: opts.jenkinsToken,
         insecure: opts.insecure ?? false,
         logLevel: opts.logLevel as LogLevel,
-        timeout: parseInt(String(opts.timeout), 10)
+        timeout: parseInt(String(opts.timeout), 10),
+        maxRetries: parseInt(String(opts.maxRetries), 10),
+        retryDelay: parseInt(String(opts.retryDelay), 10)
     };
 
     validate(config);

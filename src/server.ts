@@ -21,7 +21,9 @@ export function createServer(config: Config): McpServer {
         baseUrl: config.jenkinsUrl,
         user: config.jenkinsUser,
         apiToken: config.jenkinsApiToken,
-        timeout: config.timeout
+        timeout: config.timeout,
+        maxRetries: config.maxRetries,
+        retryDelay: config.retryDelay
     });
 
     logger.info(`Registering tools for Jenkins instance: ${config.jenkinsUrl}`);
