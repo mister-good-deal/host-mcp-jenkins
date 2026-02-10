@@ -1,6 +1,6 @@
 {
     "name": "@mister-good-deal/host-mcp-jenkins",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "description": "Local MCP server for Jenkins — replicates the Jenkins MCP Server Plugin by calling Jenkins REST API, no plugin installation required",
     "packageManager": "pnpm@10.29.2",
     "type": "module",
@@ -16,8 +16,8 @@
         "dev": "tsx src/index.ts",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
-        "test": "NODE_OPTIONS='--experimental-vm-modules' jest --config jest.config.ts",
-        "test:integration": "NODE_OPTIONS='--experimental-vm-modules' jest --config jest.integration.config.ts --testTimeout=30000",
+        "test": "NODE_OPTIONS='--experimental-vm-modules --disable-warning=ExperimentalWarning' jest --config jest.config.ts",
+        "test:integration": "NODE_OPTIONS='--experimental-vm-modules --disable-warning=ExperimentalWarning' jest --config jest.integration.config.ts --testTimeout=30000",
         "prepublishOnly": "pnpm run build"
     },
     "keywords": [
@@ -50,8 +50,6 @@
     "devDependencies": {
         "@eslint/js": "^9.0.0",
         "@stylistic/eslint-plugin": "^4.0.0",
-        "@stylistic/eslint-plugin-plus": "^4.0.0",
-        "@stylistic/eslint-plugin-ts": "^4.0.0",
         "@types/jest": "^29.5.0",
         "@types/node": "^22.0.0",
         "eslint": "^9.0.0",

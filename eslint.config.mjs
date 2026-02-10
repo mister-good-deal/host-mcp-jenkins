@@ -3,8 +3,6 @@
 import eslint from "@eslint/js";
 import tsEslint from "typescript-eslint";
 import stylistic from "@stylistic/eslint-plugin";
-import stylisticPlus from "@stylistic/eslint-plugin-plus";
-import stylisticTs from "@stylistic/eslint-plugin-ts";
 import globals from "globals";
 
 export default tsEslint.config(
@@ -60,9 +58,7 @@ export default tsEslint.config(
     {
         name: "stylistic",
         plugins: {
-            "@stylistic": stylistic,
-            "@stylistic/ts": stylisticTs,
-            "@stylistic/plus": stylisticPlus
+            "@stylistic": stylistic
         },
         rules: {
             "@stylistic/quote-props": ["error", "consistent-as-needed"],
@@ -101,13 +97,13 @@ export default tsEslint.config(
                 { blankLine: "always", prev: ["if"], next: "*" },
                 { blankLine: "any", prev: ["if"], next: ["if"] }
             ],
-            "@stylistic/plus/curly-newline": [
+            "@stylistic/curly-newline": [
                 "error", { multiline: true,
                     consistent: true }
             ],
-            "@stylistic/ts/quotes": ["error", "double"],
-            "@stylistic/ts/semi": ["error", "always"],
-            "@stylistic/ts/indent": [
+            "@stylistic/quotes": ["error", "double"],
+            "@stylistic/semi": ["error", "always"],
+            "@stylistic/indent": [
                 "error",
                 4,
                 {
