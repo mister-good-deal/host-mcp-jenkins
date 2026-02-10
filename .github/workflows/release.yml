@@ -29,7 +29,6 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          registry-url: https://registry.npmjs.org
 
       - run: pnpm install --frozen-lockfile
 
@@ -65,4 +64,4 @@ jobs:
 
       - name: Publish to npm (OIDC trusted publisher)
         if: steps.tag.outputs.exists == 'false'
-        run: pnpm publish --no-git-checks --access public
+        run: npm publish --access public
