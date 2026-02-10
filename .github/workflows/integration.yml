@@ -1,0 +1,53 @@
+name: Integration Tests
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *" # Nightly at 3 AM UTC
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+
+    services:
+      jenkins:
+        image: jenkins/jenkins:lts
+        ports:
+          - 8080:8080
+        env:
+          JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm run build
+
+      - name: Wait for Jenkins to start
+        run: |
+          echo "Waiting for Jenkins..."
+          for i in $(seq 1 60); do
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/json | grep -q "200\|403"; then
+              echo "Jenkins is up!"
+              break
+            fi
+            echo "Attempt $i/60..."
+            sleep 5
+          done
+
+      - name: Run integration tests
+        env:
+          JENKINS_URL: http://localhost:8080
+          JENKINS_USER: admin
+          JENKINS_API_TOKEN: admin
+        run: pnpm run test:integration
