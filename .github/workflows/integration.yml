@@ -3,11 +3,12 @@ name: Integration Tests
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 3 * * *" # Nightly at 3 AM UTC
+    - cron: "0 3 * * 0" # Weekly on Sunday at 3 AM UTC
 
 jobs:
   integration:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     services:
       jenkins:
@@ -16,6 +17,12 @@ jobs:
           - 8080:8080
         env:
           JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"
+        options: >-
+          --health-cmd "curl -sf http://localhost:8080/login || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+          --health-start-period 60s
 
     steps:
       - uses: actions/checkout@v4
@@ -30,18 +37,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm run build
-
-      - name: Wait for Jenkins to start
-        run: |
-          echo "Waiting for Jenkins..."
-          for i in $(seq 1 60); do
-            if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/json | grep -q "200\|403"; then
-              echo "Jenkins is up!"
-              break
-            fi
-            echo "Attempt $i/60..."
-            sleep 5
-          done
 
       - name: Run integration tests
         env:
