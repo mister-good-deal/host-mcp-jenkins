@@ -13,14 +13,17 @@ export function registerTestTools(server: McpServer, client: JenkinsClient): voi
     const logger = getLogger();
 
     // ── getTestResults ───────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "getTestResults",
-        "Retrieves the test results associated to a Jenkins build",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job"),
-            buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
-            onlyFailingTests: z.boolean().default(false).optional().
-                describe("If true, only return failing tests")
+            description: "Retrieves the test results associated to a Jenkins build",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
+                onlyFailingTests: z.boolean().default(false).optional().
+                    describe("If true, only return failing tests")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ jobFullName, buildNumber, onlyFailingTests = false }) => {
             logger.debug(`getTestResults: ${jobFullName}#${buildNumber ?? "last"}, failing=${onlyFailingTests}`);
@@ -70,12 +73,15 @@ export function registerTestTools(server: McpServer, client: JenkinsClient): voi
     );
 
     // ── getFlakyFailures ─────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "getFlakyFailures",
-        "Retrieves the flaky failures associated to a Jenkins build if any found",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job"),
-            buildNumber: z.number().int().optional().describe("Build number (omit for last build)")
+            description: "Retrieves the flaky failures associated to a Jenkins build if any found",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                buildNumber: z.number().int().optional().describe("Build number (omit for last build)")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ jobFullName, buildNumber }) => {
             logger.debug(`getFlakyFailures: ${jobFullName}#${buildNumber ?? "last"}`);

@@ -15,17 +15,17 @@ describe("Core Tools", () => {
         toolHandlers = new Map();
 
         // Intercept tool registration to capture handlers
-        const originalTool = server.tool.bind(server);
+        const originalRegisterTool = server.registerTool.bind(server);
 
-        server.tool = ((...args: unknown[]) => {
+        server.registerTool = ((...args: unknown[]) => {
             const name = args[0] as string;
             // The handler is always the last argument
             const handler = args[args.length - 1] as (args: Record<string, unknown>) => Promise<unknown>;
 
             toolHandlers.set(name, handler);
 
-            return originalTool(...(args as Parameters<typeof originalTool>));
-        }) as typeof server.tool;
+            return originalRegisterTool(...(args as Parameters<typeof originalRegisterTool>));
+        }) as typeof server.registerTool;
 
         registerCoreTools(server, client);
     });

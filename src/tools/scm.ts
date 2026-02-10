@@ -19,11 +19,14 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
     const logger = getLogger();
 
     // ── getJobScm ────────────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "getJobScm",
-        "Retrieves SCM configurations of a Jenkins job",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job")
+            description: "Retrieves SCM configurations of a Jenkins job",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ jobFullName }) => {
             logger.debug(`getJobScm: ${jobFullName}`);
@@ -52,12 +55,15 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
     );
 
     // ── getBuildScm ──────────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "getBuildScm",
-        "Retrieves SCM configurations of a Jenkins build",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job"),
-            buildNumber: z.number().int().optional().describe("Build number (omit for last build)")
+            description: "Retrieves SCM configurations of a Jenkins build",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                buildNumber: z.number().int().optional().describe("Build number (omit for last build)")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ jobFullName, buildNumber }) => {
             logger.debug(`getBuildScm: ${jobFullName}#${buildNumber ?? "last"}`);
@@ -89,12 +95,15 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
     );
 
     // ── getBuildChangeSets ───────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "getBuildChangeSets",
-        "Retrieves change log sets of a Jenkins build",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job"),
-            buildNumber: z.number().int().optional().describe("Build number (omit for last build)")
+            description: "Retrieves change log sets of a Jenkins build",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                buildNumber: z.number().int().optional().describe("Build number (omit for last build)")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ jobFullName, buildNumber }) => {
             logger.debug(`getBuildChangeSets: ${jobFullName}#${buildNumber ?? "last"}`);
@@ -120,19 +129,22 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
     );
 
     // ── findJobsWithScmUrl ───────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "findJobsWithScmUrl",
-        "Get a paginated list of Jenkins jobs that use the specified git SCM URL",
         {
-            scmUrl: z.string().describe("Git SCM URL to search for"),
-            branch: z.string().optional().describe("Branch name to filter by"),
-            skip: z.number().int().min(0).default(0).
-                optional().
-                describe("Number of jobs to skip"),
-            limit: z.number().int().min(1).max(10).
-                default(10).
-                optional().
-                describe("Maximum number of jobs to return (max 10)")
+            description: "Get a paginated list of Jenkins jobs that use the specified git SCM URL",
+            inputSchema: {
+                scmUrl: z.string().describe("Git SCM URL to search for"),
+                branch: z.string().optional().describe("Branch name to filter by"),
+                skip: z.number().int().min(0).default(0).
+                    optional().
+                    describe("Number of jobs to skip"),
+                limit: z.number().int().min(1).max(10).
+                    default(10).
+                    optional().
+                    describe("Maximum number of jobs to return (max 10)")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ scmUrl, branch, skip = 0, limit = 10 }) => {
             logger.debug(`findJobsWithScmUrl: ${scmUrl}, branch=${branch ?? "any"}`);
