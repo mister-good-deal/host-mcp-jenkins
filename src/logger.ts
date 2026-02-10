@@ -27,9 +27,7 @@ export function initLogger(level: LogLevel = "info"): winston.Logger {
 }
 
 export function getLogger(): winston.Logger {
-    if (!logger) {
-        return initLogger();
-    }
+    if (!logger) return initLogger();
 
     return logger;
 }

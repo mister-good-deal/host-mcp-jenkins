@@ -15,11 +15,7 @@ export function jobFullNameToPath(jobFullName: string): string {
 export function buildQueryString(params: Record<string, string | number | boolean | undefined | null>): string {
     const parts: string[] = [];
 
-    for (const [key, value] of Object.entries(params)) {
-        if (value !== undefined && value !== null) {
-            parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`);
-        }
-    }
+    for (const [key, value] of Object.entries(params)) if (value !== undefined && value !== null) parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`);
 
     return parts.length > 0 ? `?${parts.join("&")}` : "";
 }

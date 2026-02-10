@@ -50,7 +50,8 @@ export default tsEslint.config(
                     ignoreRestSiblings: true
                 }
             ],
-            "no-dupe-class-members": "off" // Allow overloads in classes with TS
+            "no-dupe-class-members": "off", // Allow overloads in classes with TS
+            "curly": ["error", "multi"]
         }
     },
 

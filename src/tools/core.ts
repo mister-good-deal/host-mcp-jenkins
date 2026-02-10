@@ -32,9 +32,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
 
                 return toMcpResult(toolSuccess(job));
             } catch (error) {
-                if (error instanceof JenkinsClientError && error.statusCode === 404) {
-                    return toMcpResult(toolNotFound("Job", jobFullName));
-                }
+                if (error instanceof JenkinsClientError && error.statusCode === 404) return toMcpResult(toolNotFound("Job", jobFullName));
 
                 return toMcpResult(toolError(error));
             }
@@ -76,9 +74,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
 
                 return toMcpResult(toolSuccess(paged));
             } catch (error) {
-                if (error instanceof JenkinsClientError && error.statusCode === 404) {
-                    return toMcpResult(toolNotFound("Folder", parentFullName ?? "root"));
-                }
+                if (error instanceof JenkinsClientError && error.statusCode === 404) return toMcpResult(toolNotFound("Folder", parentFullName ?? "root"));
 
                 return toMcpResult(toolError(error));
             }
@@ -147,32 +143,26 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                         `${jobPath}/buildWithParameters`,
                         formData
                     );
-                } else {
-                    result = await client.post<JenkinsQueueItem>(`${jobPath}/build`);
-                }
+                } else result = await client.post<JenkinsQueueItem>(`${jobPath}/build`);
 
                 // Try to fetch queue item from Location header
-                if (result.location) {
-                    try {
-                        const queueUrl = new URL(result.location);
-                        const queuePath = `${queueUrl.pathname}api/json`;
-                        const queueItem = await client.get<JenkinsQueueItem>(queuePath);
+                if (result.location) try {
+                    const queueUrl = new URL(result.location);
+                    const queuePath = `${queueUrl.pathname}api/json`;
+                    const queueItem = await client.get<JenkinsQueueItem>(queuePath);
 
-                        return toMcpResult(toolSuccess(queueItem, "Build triggered successfully."));
-                    } catch {
-                        // If we can't fetch queue item, still report success
-                        return toMcpResult(toolSuccess(
-                            { queueLocation: result.location },
-                            "Build triggered successfully."
-                        ));
-                    }
+                    return toMcpResult(toolSuccess(queueItem, "Build triggered successfully."));
+                } catch {
+                    // If we can't fetch queue item, still report success
+                    return toMcpResult(toolSuccess(
+                        { queueLocation: result.location },
+                        "Build triggered successfully."
+                    ));
                 }
 
                 return toMcpResult(toolSuccess(result.data, "Build triggered successfully."));
             } catch (error) {
-                if (error instanceof JenkinsClientError && error.statusCode === 404) {
-                    return toMcpResult(toolNotFound("Job", jobFullName));
-                }
+                if (error instanceof JenkinsClientError && error.statusCode === 404) return toMcpResult(toolNotFound("Job", jobFullName));
 
                 return toMcpResult(toolError(error));
             }
@@ -195,21 +185,15 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
         async({ jobFullName, buildNumber, displayName, description }) => {
             logger.debug(`updateBuild: ${jobFullName}#${buildNumber ?? "last"}`);
 
-            if (!displayName && !description) {
-                return toMcpResult(toolFailure("At least one of displayName or description must be provided."));
-            }
+            if (!displayName && !description) return toMcpResult(toolFailure("At least one of displayName or description must be provided."));
 
             try {
                 const buildPath = buildNumber ? `/${buildNumber}` : "/lastBuild";
                 const basePath = `${jobFullNameToPath(jobFullName)}${buildPath}`;
 
-                if (description !== undefined) {
-                    await client.post(`${basePath}/submitDescription`, new URLSearchParams({ description }));
-                }
+                if (description !== undefined) await client.post(`${basePath}/submitDescription`, new URLSearchParams({ description }));
 
-                if (displayName !== undefined) {
-                    await client.post(`${basePath}/configSubmit`, new URLSearchParams({ displayName }));
-                }
+                if (displayName !== undefined) await client.post(`${basePath}/configSubmit`, new URLSearchParams({ displayName }));
 
                 return toMcpResult(toolSuccess(true, "Build updated successfully."));
             } catch (error) {
@@ -305,9 +289,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
 
                 return toMcpResult(toolSuccess(item));
             } catch (error) {
-                if (error instanceof JenkinsClientError && error.statusCode === 404) {
-                    return toMcpResult(toolNotFound("Queue item", String(id)));
-                }
+                if (error instanceof JenkinsClientError && error.statusCode === 404) return toMcpResult(toolNotFound("Queue item", String(id)));
 
                 return toMcpResult(toolError(error));
             }

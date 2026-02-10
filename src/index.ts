@@ -14,9 +14,7 @@ async function main(): Promise<void> {
     const config = parseConfig();
 
     // Handle --insecure: skip TLS verification
-    if (config.insecure) {
-        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-    }
+    if (config.insecure) process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
     const logger = initLogger(config.logLevel);
 
@@ -25,11 +23,8 @@ async function main(): Promise<void> {
 
     const server = createServer(config);
 
-    if (config.transport === "http") {
-        await startHttpTransport(server, config.port);
-    } else {
-        await startStdioTransport(server);
-    }
+    if (config.transport === "http") await startHttpTransport(server, config.port);
+    else await startStdioTransport(server);
 }
 
 async function startStdioTransport(server: ReturnType<typeof createServer>): Promise<void> {

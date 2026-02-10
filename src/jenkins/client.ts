@@ -89,9 +89,7 @@ export class JenkinsClient {
             signal: AbortSignal.timeout(this.timeout)
         });
 
-        if (!response.ok) {
-            await this.handleError(response, url);
-        }
+        if (!response.ok) await this.handleError(response, url);
 
         const text = await response.text();
 
@@ -141,19 +139,13 @@ export class JenkinsClient {
          * Jenkins returns 201 for build trigger with Location header
          * and sometimes 302 redirect
          */
-        if (response.status === 201 || response.status === 302) {
-            return { data: null, location };
-        }
+        if (response.status === 201 || response.status === 302) return { data: null, location };
 
-        if (!response.ok) {
-            await this.handleError(response, url);
-        }
+        if (!response.ok) await this.handleError(response, url);
 
         const text = await response.text();
 
-        if (text.length === 0) {
-            return { data: null, location };
-        }
+        if (text.length === 0) return { data: null, location };
 
         try {
             return { data: JSON.parse(text) as T, location };
@@ -191,9 +183,7 @@ export class JenkinsClient {
             signal: AbortSignal.timeout(this.timeout)
         });
 
-        if (!response.ok) {
-            await this.handleError(response, url);
-        }
+        if (!response.ok) await this.handleError(response, url);
 
         return response.json() as Promise<T>;
     }
@@ -209,9 +199,7 @@ export class JenkinsClient {
             signal: AbortSignal.timeout(this.timeout)
         });
 
-        if (!response.ok) {
-            await this.handleError(response, url);
-        }
+        if (!response.ok) await this.handleError(response, url);
 
         return response.text();
     }
@@ -224,34 +212,30 @@ export class JenkinsClient {
         const logger = getLogger();
         let lastError: unknown;
 
-        for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
-            try {
-                const response = await fetch(url, init);
+        for (let attempt = 0; attempt <= this.maxRetries; attempt++) try {
+            const response = await fetch(url, init);
 
-                if (attempt < this.maxRetries && RETRYABLE_STATUS_CODES.has(response.status)) {
-                    const delay = this.computeBackoff(attempt);
+            if (attempt < this.maxRetries && RETRYABLE_STATUS_CODES.has(response.status)) {
+                const delay = this.computeBackoff(attempt);
 
-                    logger.warn(`Retryable HTTP ${response.status} for ${url}, retrying in ${delay}ms (attempt ${attempt + 1}/${this.maxRetries})`);
-                    await this.sleep(delay);
+                logger.warn(`Retryable HTTP ${response.status} for ${url}, retrying in ${delay}ms (attempt ${attempt + 1}/${this.maxRetries})`);
+                await this.sleep(delay);
 
-                    continue;
-                }
+                continue;
+            }
 
-                return response;
-            } catch (error) {
-                lastError = error;
+            return response;
+        } catch (error) {
+            lastError = error;
 
-                // Don't retry AbortError (timeout) — the caller set an explicit timeout
-                if (error instanceof DOMException && error.name === "AbortError") {
-                    throw error;
-                }
+            // Don't retry AbortError (timeout) — the caller set an explicit timeout
+            if (error instanceof DOMException && error.name === "AbortError") throw error;
 
-                if (attempt < this.maxRetries) {
-                    const delay = this.computeBackoff(attempt);
+            if (attempt < this.maxRetries) {
+                const delay = this.computeBackoff(attempt);
 
-                    logger.warn(`Network error for ${url}, retrying in ${delay}ms (attempt ${attempt + 1}/${this.maxRetries}): ${error instanceof Error ? error.message : error}`);
-                    await this.sleep(delay);
-                }
+                logger.warn(`Network error for ${url}, retrying in ${delay}ms (attempt ${attempt + 1}/${this.maxRetries}): ${error instanceof Error ? error.message : error}`);
+                await this.sleep(delay);
             }
         }
 
@@ -274,21 +258,17 @@ export class JenkinsClient {
     private async handleError(response: Response, url: string): Promise<never> {
         const body = await response.text().catch(() => "");
 
-        if (response.status === 401 || response.status === 403) {
-            throw new JenkinsClientError(
-                `Authentication failed (${response.status}). Check your Jenkins URL, username, and API token.`,
-                response.status,
-                body
-            );
-        }
+        if (response.status === 401 || response.status === 403) throw new JenkinsClientError(
+            `Authentication failed (${response.status}). Check your Jenkins URL, username, and API token.`,
+            response.status,
+            body
+        );
 
-        if (response.status === 404) {
-            throw new JenkinsClientError(
-                `Resource not found: ${url}`,
-                response.status,
-                body
-            );
-        }
+        if (response.status === 404) throw new JenkinsClientError(
+            `Resource not found: ${url}`,
+            response.status,
+            body
+        );
 
         throw new JenkinsClientError(
             `Jenkins API error (${response.status}): ${body || response.statusText}`,

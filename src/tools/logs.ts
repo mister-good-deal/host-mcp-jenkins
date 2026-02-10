@@ -65,9 +65,7 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
                 const allLines = rawLog.split("\n");
 
                 // Remove trailing empty line from split
-                if (allLines.length > 0 && allLines[allLines.length - 1] === "") {
-                    allLines.pop();
-                }
+                if (allLines.length > 0 && allLines[allLines.length - 1] === "") allLines.pop();
 
                 const totalLines = allLines.length;
                 const effectiveLimit = Math.min(Math.abs(limit), MAX_LOG_LINES);
@@ -184,9 +182,7 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
 
                 const allLines = rawLog.split("\n");
 
-                if (allLines.length > 0 && allLines[allLines.length - 1] === "") {
-                    allLines.pop();
-                }
+                if (allLines.length > 0 && allLines[allLines.length - 1] === "") allLines.pop();
 
                 const totalLines = allLines.length;
                 const flags = ignoreCase ? "i" : "";
@@ -197,21 +193,19 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
                 const matches: SearchMatch[] = [];
                 let matchCount = 0;
 
-                for (let i = 0; i < totalLines; i++) {
-                    if (regex.test(allLines[i])) {
-                        matchCount++;
+                for (let i = 0; i < totalLines; i++) if (regex.test(allLines[i])) {
+                    matchCount++;
 
-                        if (matches.length < maxMatches) {
-                            const ctxStart = Math.max(0, i - contextLines);
-                            const ctxEnd = Math.min(totalLines, i + contextLines + 1);
+                    if (matches.length < maxMatches) {
+                        const ctxStart = Math.max(0, i - contextLines);
+                        const ctxEnd = Math.min(totalLines, i + contextLines + 1);
 
-                            matches.push({
-                                lineNumber: i + 1, // 1-indexed
-                                line: allLines[i],
-                                contextBefore: allLines.slice(ctxStart, i),
-                                contextAfter: allLines.slice(i + 1, ctxEnd)
-                            });
-                        }
+                        matches.push({
+                            lineNumber: i + 1, // 1-indexed
+                            line: allLines[i],
+                            contextBefore: allLines.slice(ctxStart, i),
+                            contextAfter: allLines.slice(i + 1, ctxEnd)
+                        });
                     }
                 }
 

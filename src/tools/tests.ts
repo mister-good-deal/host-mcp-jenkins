@@ -36,9 +36,7 @@ export function registerTestTools(server: McpServer, client: JenkinsClient): voi
                 if (onlyFailingTests) {
                     const failingTests = extractFailingTests(testResult);
 
-                    if (failingTests.length === 0) {
-                        return toMcpResult(toolEmpty("No failing tests found."));
-                    }
+                    if (failingTests.length === 0) return toMcpResult(toolEmpty("No failing tests found."));
 
                     return toMcpResult(toolSuccess({
                         TestResultAction: {
@@ -93,9 +91,7 @@ export function registerTestTools(server: McpServer, client: JenkinsClient): voi
 
                 const flakyTests = extractFlakyTests(testResult);
 
-                if (flakyTests.length === 0) {
-                    return toMcpResult(toolEmpty("No flaky failures found."));
-                }
+                if (flakyTests.length === 0) return toMcpResult(toolEmpty("No flaky failures found."));
 
                 return toMcpResult(toolSuccess({
                     TestResultAction: {
@@ -123,17 +119,9 @@ export function registerTestTools(server: McpServer, client: JenkinsClient): voi
 function extractFailingTests(testResult: JenkinsTestResult): JenkinsTestCase[] {
     const failing: JenkinsTestCase[] = [];
 
-    if (!testResult.suites) {
-        return failing;
-    }
+    if (!testResult.suites) return failing;
 
-    for (const suite of testResult.suites) {
-        for (const testCase of suite.cases) {
-            if (testCase.status === "FAILED" || testCase.status === "REGRESSION") {
-                failing.push(testCase);
-            }
-        }
-    }
+    for (const suite of testResult.suites) for (const testCase of suite.cases) if (testCase.status === "FAILED" || testCase.status === "REGRESSION") failing.push(testCase);
 
     return failing;
 }
@@ -141,18 +129,12 @@ function extractFailingTests(testResult: JenkinsTestResult): JenkinsTestCase[] {
 function extractFlakyTests(testResult: JenkinsTestResult): JenkinsTestCase[] {
     const flaky: JenkinsTestCase[] = [];
 
-    if (!testResult.suites) {
-        return flaky;
-    }
+    if (!testResult.suites) return flaky;
 
-    for (const suite of testResult.suites) {
-        for (const testCase of suite.cases) {
-            const tc = testCase as unknown as Record<string, unknown>; /* flaky check */
+    for (const suite of testResult.suites) for (const testCase of suite.cases) {
+        const tc = testCase as unknown as Record<string, unknown>; /* flaky check */
 
-            if (tc.flakyFailures && Array.isArray(tc.flakyFailures) && (tc.flakyFailures as unknown[]).length > 0) {
-                flaky.push(testCase);
-            }
-        }
+        if (tc.flakyFailures && Array.isArray(tc.flakyFailures) && (tc.flakyFailures as unknown[]).length > 0) flaky.push(testCase);
     }
 
     return flaky;
