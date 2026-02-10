@@ -3,6 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "./config.js";
 import { JenkinsClient } from "./jenkins/client.js";
 import { getLogger } from "./logger.js";
+import { VERSION } from "./version.js";
 import { registerCoreTools } from "./tools/core.js";
 import { registerLogTools } from "./tools/logs.js";
 import { registerScmTools } from "./tools/scm.js";
@@ -13,7 +14,7 @@ export function createServer(config: Config): McpServer {
 
     const server = new McpServer({
         name: "host-mcp-jenkins",
-        version: "0.1.0"
+        version: VERSION
     });
 
     const client = new JenkinsClient({
