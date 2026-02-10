@@ -41,15 +41,18 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
     const logger = getLogger();
 
     // ── getBuildLog ──────────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "getBuildLog",
-        "Retrieves some log lines with pagination for a specific build or the last build",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job"),
-            buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
-            skip: z.number().int().optional().describe("Number of lines to skip (negative = from end)"),
-            limit: z.number().int().default(100).optional().
-                describe("Number of lines to return (positive=from start, negative=from end, default 100)")
+            description: "Retrieves some log lines with pagination for a specific build or the last build",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
+                skip: z.number().int().optional().describe("Number of lines to skip (negative = from end)"),
+                limit: z.number().int().default(100).optional().
+                    describe("Number of lines to return (positive=from start, negative=from end, default 100)")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ jobFullName, buildNumber, skip, limit = 100 }) => {
             logger.debug(`getBuildLog: ${jobFullName}#${buildNumber ?? "last"}, skip=${skip}, limit=${limit}`);
@@ -106,23 +109,26 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
     );
 
     // ── searchBuildLog ───────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "searchBuildLog",
-        "Search for log lines matching a pattern in a specific build or the last build",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job"),
-            buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
-            pattern: z.string().describe("Search pattern (string or regex)"),
-            useRegex: z.boolean().default(false).optional().describe("Treat pattern as regex"),
-            ignoreCase: z.boolean().default(false).optional().describe("Case-insensitive search"),
-            maxMatches: z.number().int().min(1).max(MAX_SEARCH_MATCHES).
-                default(100).
-                optional().
-                describe("Maximum number of matches to return (max 1000)"),
-            contextLines: z.number().int().min(0).max(MAX_CONTEXT_LINES).
-                default(0).
-                optional().
-                describe("Number of context lines before and after each match (max 10)")
+            description: "Search for log lines matching a pattern in a specific build or the last build",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
+                pattern: z.string().describe("Search pattern (string or regex)"),
+                useRegex: z.boolean().default(false).optional().describe("Treat pattern as regex"),
+                ignoreCase: z.boolean().default(false).optional().describe("Case-insensitive search"),
+                maxMatches: z.number().int().min(1).max(MAX_SEARCH_MATCHES).
+                    default(100).
+                    optional().
+                    describe("Maximum number of matches to return (max 1000)"),
+                contextLines: z.number().int().min(0).max(MAX_CONTEXT_LINES).
+                    default(0).
+                    optional().
+                    describe("Number of context lines before and after each match (max 10)")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ jobFullName, buildNumber, pattern, useRegex = false, ignoreCase = false, maxMatches = 100, contextLines = 0 }) => {
             logger.debug(`searchBuildLog: ${jobFullName}#${buildNumber ?? "last"}, pattern="${pattern}"`);
