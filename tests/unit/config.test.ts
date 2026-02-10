@@ -25,6 +25,8 @@ describe("parseConfig", () => {
         expect(config.timeout).toBe(30000);
         expect(config.maxRetries).toBe(3);
         expect(config.retryDelay).toBe(1000);
+        expect(config.transport).toBe("stdio");
+        expect(config.port).toBe(3000);
     });
 
     it("should parse --insecure flag", () => {
@@ -99,6 +101,21 @@ describe("parseConfig", () => {
             "--log-level",
             "verbose"
         ])).toThrow(/Invalid log level/);
+    });
+
+    it("should parse --transport http with --port", () => {
+        const config = parseConfig([...validArgs, "--transport", "http", "--port", "8080"]);
+
+        expect(config.transport).toBe("http");
+        expect(config.port).toBe(8080);
+    });
+
+    it("should throw on invalid transport type", () => {
+        expect(() => parseConfig([
+            ...validArgs,
+            "--transport",
+            "websocket"
+        ])).toThrow(/Invalid transport/);
     });
 
     it("should fall back to environment variables", () => {
