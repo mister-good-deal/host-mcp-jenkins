@@ -140,5 +140,45 @@ describe("SCM Tools", () => {
             expect(jobs).toHaveLength(1);
             expect(jobs[0].name).toBe("job1");
         });
+
+        it("should find jobs inside nested folders", async() => {
+            client.get.mockResolvedValueOnce({
+                jobs: [
+                    {
+                        name: "folder1",
+                        fullName: "folder1",
+                        url: "url-folder",
+                        jobs: [
+                            {
+                                name: "nested-job",
+                                fullName: "folder1/nested-job",
+                                url: "url-nested",
+                                actions: [{ remoteUrls: ["https://github.com/org/repo.git"] }]
+                            }
+                        ]
+                    },
+                    {
+                        name: "top-job",
+                        fullName: "top-job",
+                        url: "url-top",
+                        actions: [{ remoteUrls: ["https://github.com/org/other.git"] }]
+                    }
+                ]
+            });
+
+            const handler = toolHandlers.get("findJobsWithScmUrl")!;
+            const result = await handler({
+                scmUrl: "https://github.com/org/repo",
+                skip: 0,
+                limit: 10
+            }) as ReturnType<typeof extractToolResponse>;
+            const response = extractToolResponse(result as never);
+
+            expect(response.status).toBe("COMPLETED");
+            const jobs = response.result as Array<{ fullName: string }>;
+
+            expect(jobs).toHaveLength(1);
+            expect(jobs[0].fullName).toBe("folder1/nested-job");
+        });
     });
 });
