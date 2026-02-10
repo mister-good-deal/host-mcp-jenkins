@@ -2,6 +2,8 @@ import { Command } from "commander";
 
 import type { LogLevel } from "./logger.js";
 
+export type TransportType = "stdio" | "http";
+
 export interface Config {
     jenkinsUrl: string;
     jenkinsUser: string;
@@ -9,6 +11,8 @@ export interface Config {
     insecure: boolean;
     logLevel: LogLevel;
     timeout: number;
+    transport: TransportType;
+    port: number;
 }
 
 export function parseConfig(argv: string[] = process.argv): Config {
@@ -47,6 +51,16 @@ export function parseConfig(argv: string[] = process.argv): Config {
             "--timeout <ms>",
             "HTTP request timeout in milliseconds",
             process.env.JENKINS_TIMEOUT ?? "30000"
+        ).
+        option(
+            "--transport <type>",
+            "MCP transport type (stdio or http)",
+            process.env.MCP_TRANSPORT ?? "stdio"
+        ).
+        option(
+            "--port <port>",
+            "HTTP server port (only used with --transport http)",
+            process.env.MCP_PORT ?? "3000"
         );
 
     program.parse(argv);
@@ -59,7 +73,9 @@ export function parseConfig(argv: string[] = process.argv): Config {
         jenkinsApiToken: opts.jenkinsToken,
         insecure: opts.insecure ?? false,
         logLevel: opts.logLevel as LogLevel,
-        timeout: parseInt(String(opts.timeout), 10)
+        timeout: parseInt(String(opts.timeout), 10),
+        transport: opts.transport as TransportType,
+        port: parseInt(String(opts.port), 10)
     };
 
     validate(config);
@@ -94,6 +110,16 @@ function validate(config: Config): void {
 
     if (isNaN(config.timeout) || config.timeout <= 0) {
         throw new Error(`Invalid timeout: ${config.timeout}. Must be a positive number.`);
+    }
+
+    const validTransports: TransportType[] = ["stdio", "http"];
+
+    if (!validTransports.includes(config.transport)) {
+        throw new Error(`Invalid transport: ${config.transport}. Must be one of: ${validTransports.join(", ")}`);
+    }
+
+    if (config.transport === "http" && (isNaN(config.port) || config.port <= 0 || config.port > 65535)) {
+        throw new Error(`Invalid port: ${config.port}. Must be between 1 and 65535.`);
     }
 
     // Normalize URL — remove trailing slash
