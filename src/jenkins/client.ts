@@ -6,8 +6,10 @@ export interface JenkinsClientConfig {
     user: string;
     apiToken: string;
     timeout: number;
+
     /** Maximum number of retries for transient errors (default: 3). */
     maxRetries?: number;
+
     /** Base delay in ms for exponential backoff (default: 1000). */
     retryDelay?: number;
 }

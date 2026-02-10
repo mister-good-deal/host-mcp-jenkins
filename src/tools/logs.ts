@@ -109,16 +109,20 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
     );
 
     // ── getProgressiveBuildLog ───────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "getProgressiveBuildLog",
-        "Retrieves build log output incrementally using Jenkins progressive text API. " +
-        "Pass the returned nextByteOffset as the start parameter in subsequent calls to get only new output. " +
-        "Ideal for tailing logs of running builds without re-fetching the entire log.",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job"),
-            buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
-            start: z.number().int().min(0).default(0).optional().
-                describe("Byte offset to start from (use nextByteOffset from previous response)")
+            description: "Retrieves build log output incrementally using Jenkins progressive text API. " +
+              "Pass the returned nextByteOffset as the start parameter in subsequent calls to get only new output. " +
+              "Ideal for tailing logs of running builds without re-fetching the entire log.",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
+                start: z.number().int().min(0).default(0).
+                    optional().
+                    describe("Byte offset to start from (use nextByteOffset from previous response)")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ jobFullName, buildNumber, start = 0 }) => {
             logger.debug(`getProgressiveBuildLog: ${jobFullName}#${buildNumber ?? "last"}, start=${start}`);
@@ -143,7 +147,7 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
                     return toMcpResult(toolNotFound("Build", id));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
