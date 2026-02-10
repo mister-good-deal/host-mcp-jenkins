@@ -23,6 +23,8 @@ describe("parseConfig", () => {
         expect(config.insecure).toBe(false);
         expect(config.logLevel).toBe("info");
         expect(config.timeout).toBe(30000);
+        expect(config.maxRetries).toBe(3);
+        expect(config.retryDelay).toBe(1000);
     });
 
     it("should parse --insecure flag", () => {
