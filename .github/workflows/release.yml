@@ -63,8 +63,6 @@ jobs:
           tag_name: v${{ steps.pkg.outputs.version }}
           generate_release_notes: true
 
-      - name: Publish to npm
+      - name: Publish to npm (OIDC trusted publisher)
         if: steps.tag.outputs.exists == 'false'
         run: pnpm publish --no-git-checks --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
