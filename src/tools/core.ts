@@ -7,7 +7,7 @@ import { JenkinsClientError } from "../jenkins/client.js";
 import type { JenkinsBuild, JenkinsComputerSet, JenkinsJob, JenkinsQueue, JenkinsQueueItem, JenkinsRootInfo, JenkinsUser } from "../jenkins/types.js";
 import { jobFullNameToPath } from "../jenkins/utils.js";
 import { getLogger } from "../logger.js";
-import { toMcpResult, toolFailure, toolNotFound, toolSuccess } from "../response.js";
+import { toMcpResult, toolError, toolFailure, toolNotFound, toolSuccess } from "../response.js";
 
 export function registerCoreTools(server: McpServer, client: JenkinsClient): void {
     const logger = getLogger();
@@ -36,7 +36,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                     return toMcpResult(toolNotFound("Job", jobFullName));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
@@ -80,7 +80,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                     return toMcpResult(toolNotFound("Folder", parentFullName ?? "root"));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
@@ -113,7 +113,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                     return toMcpResult(toolNotFound("Build", id));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
@@ -174,7 +174,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                     return toMcpResult(toolNotFound("Job", jobFullName));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
@@ -219,7 +219,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                     return toMcpResult(toolNotFound("Build", id));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
@@ -234,9 +234,13 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
         async() => {
             logger.debug("whoAmI");
 
-            const user = await client.get<JenkinsUser>("/me/api/json");
+            try {
+                const user = await client.get<JenkinsUser>("/me/api/json");
 
-            return toMcpResult(toolSuccess({ fullName: user.fullName }));
+                return toMcpResult(toolSuccess({ fullName: user.fullName }));
+            } catch (error) {
+                return toMcpResult(toolError(error));
+            }
         }
     );
 
@@ -250,31 +254,35 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
         async() => {
             logger.debug("getStatus");
 
-            const [root, computers, queue] = await Promise.all([
-                client.get<JenkinsRootInfo>("/api/json", {
-                    tree: "quietingDown,url,nodeDescription,numExecutors"
-                }),
-                client.get<JenkinsComputerSet>("/computer/api/json", {
-                    tree: "busyExecutors,totalExecutors,computer[displayName,idle,offline,temporarilyOffline,numExecutors]"
-                }),
-                client.get<JenkinsQueue>("/queue/api/json", {
-                    tree: "items[id,task[name],why,blocked,buildable,stuck]"
-                })
-            ]);
+            try {
+                const [root, computers, queue] = await Promise.all([
+                    client.get<JenkinsRootInfo>("/api/json", {
+                        tree: "quietingDown,url,nodeDescription,numExecutors"
+                    }),
+                    client.get<JenkinsComputerSet>("/computer/api/json", {
+                        tree: "busyExecutors,totalExecutors,computer[displayName,idle,offline,temporarilyOffline,numExecutors]"
+                    }),
+                    client.get<JenkinsQueue>("/queue/api/json", {
+                        tree: "items[id,task[name],why,blocked,buildable,stuck]"
+                    })
+                ]);
 
-            const availableExecutors = computers.computer.
-                filter(c => !c.offline).
-                reduce((sum, c) => sum + c.numExecutors, 0) - computers.busyExecutors;
+                const availableExecutors = computers.computer.
+                    filter(c => !c.offline).
+                    reduce((sum, c) => sum + c.numExecutors, 0) - computers.busyExecutors;
 
-            const status: Record<string, unknown> = {
-                "Quiet Mode": root.quietingDown ?? false,
-                "Full Queue Size": queue.items.length,
-                "Buildable Queue Size": queue.items.filter(i => i.buildable).length,
-                "Available executors (any label)": availableExecutors,
-                "Root URL Status": root.url ? "configured" : "not configured"
-            };
+                const status: Record<string, unknown> = {
+                    "Quiet Mode": root.quietingDown ?? false,
+                    "Full Queue Size": queue.items.length,
+                    "Buildable Queue Size": queue.items.filter(i => i.buildable).length,
+                    "Available executors (any label)": availableExecutors,
+                    "Root URL Status": root.url ? "configured" : "not configured"
+                };
 
-            return toMcpResult(toolSuccess(status));
+                return toMcpResult(toolSuccess(status));
+            } catch (error) {
+                return toMcpResult(toolError(error));
+            }
         }
     );
 
@@ -301,7 +309,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                     return toMcpResult(toolNotFound("Queue item", String(id)));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
