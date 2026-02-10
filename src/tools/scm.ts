@@ -150,29 +150,40 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
             logger.debug(`findJobsWithScmUrl: ${scmUrl}, branch=${branch ?? "any"}`);
 
             try {
-                // Fetch all jobs recursively with SCM info
-                const data = await client.get<JenkinsRootInfo>("/api/json", {
-                    tree: "jobs[name,fullName,url,color,scm[userRemoteConfigs[url],branches[name]],actions[remoteUrls]]"
-                });
+                // Recursive tree query that descends into nested folders (3 levels deep)
+                const jobFields = "name,fullName,url,color,scm[userRemoteConfigs[url],branches[name]],actions[remoteUrls]";
+                const tree = `jobs[${jobFields},jobs[${jobFields},jobs[${jobFields}]]]`;
+
+                const data = await client.get<JenkinsRootInfo>("/api/json", { tree });
 
                 const allJobs = flattenJobs(data.jobs ?? []);
 
-                // Filter by SCM URL
-                const matching = allJobs.filter(job => {
+                // Filter by SCM URL with early termination
+                const matching: JenkinsJob[] = [];
+                const target = skip + limit;
+
+                for (const job of allJobs) {
                     const scmUrls = extractJobScmUrls(job);
 
                     if (!scmUrls.some(u => looselyMatchesUrl(u, scmUrl))) {
-                        return false;
+                        continue;
                     }
 
                     if (branch) {
                         const branches = extractJobBranches(job);
 
-                        return branches.some(b => matchesBranch(b, branch));
+                        if (!branches.some(b => matchesBranch(b, branch))) {
+                            continue;
+                        }
                     }
 
-                    return true;
-                });
+                    matching.push(job);
+
+                    // Stop early once we have enough matches for the requested page
+                    if (matching.length >= target) {
+                        break;
+                    }
+                }
 
                 const paged = matching.slice(skip, skip + limit);
 
