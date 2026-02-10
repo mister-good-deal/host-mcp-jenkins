@@ -1,6 +1,7 @@
 import { Command } from "commander";
 
 import type { LogLevel } from "./logger.js";
+import { VERSION } from "./version.js";
 
 export interface Config {
     jenkinsUrl: string;
@@ -17,7 +18,7 @@ export function parseConfig(argv: string[] = process.argv): Config {
     program.
         name("host-mcp-jenkins").
         description("Local MCP server for Jenkins — replicates Jenkins MCP Server Plugin via REST API").
-        version("0.1.0").
+        version(VERSION).
         option(
             "--jenkins-url <url>",
             "Jenkins base URL",
