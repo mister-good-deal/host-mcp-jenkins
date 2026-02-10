@@ -30,6 +30,14 @@
         "llm"
     ],
     "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mister-good-deal/host-mcp-jenkins"
+    },
+    "bugs": {
+        "url": "https://github.com/mister-good-deal/host-mcp-jenkins/issues"
+    },
+    "homepage": "https://github.com/mister-good-deal/host-mcp-jenkins#readme",
     "engines": {
         "node": ">=20.0.0"
     },

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Switched npm publish to OIDC trusted publisher (no more long-lived tokens)
 - Fixed release workflow version extraction
+- Added `repository`, `bugs`, and `homepage` fields to `package.json` (required for npm provenance)
 
 ## [0.2.0] - 2026-02-10
 
