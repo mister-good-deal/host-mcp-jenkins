@@ -11,7 +11,7 @@ The official Jenkins MCP Server Plugin must be installed on the Jenkins server. 
 ## Quick Start
 
 ```bash
-npx host-mcp-jenkins \
+npx @mister-good-deal/host-mcp-jenkins \
   --jenkins-url https://jenkins.example.com \
   --jenkins-user your-username \
   --jenkins-token your-api-token
@@ -48,7 +48,7 @@ Add to your `claude_desktop_config.json`:
   "mcpServers": {
     "jenkins": {
       "command": "npx",
-      "args": ["-y", "host-mcp-jenkins"],
+      "args": ["-y", "@mister-good-deal/host-mcp-jenkins"],
       "env": {
         "JENKINS_URL": "https://jenkins.example.com",
         "JENKINS_USER": "your-username",
@@ -68,7 +68,7 @@ Add to `.vscode/mcp.json`:
   "servers": {
     "jenkins": {
       "command": "npx",
-      "args": ["-y", "host-mcp-jenkins"],
+      "args": ["-y", "@mister-good-deal/host-mcp-jenkins"],
       "env": {
         "JENKINS_URL": "https://jenkins.example.com",
         "JENKINS_USER": "your-username",
@@ -88,7 +88,7 @@ Add to your MCP server configuration:
   "mcpServers": {
     "jenkins": {
       "command": "npx",
-      "args": ["-y", "host-mcp-jenkins", "--jenkins-url", "https://jenkins.example.com", "--jenkins-user", "your-username", "--jenkins-token", "your-api-token"]
+      "args": ["-y", "@mister-good-deal/host-mcp-jenkins", "--jenkins-url", "https://jenkins.example.com", "--jenkins-user", "your-username", "--jenkins-token", "your-api-token"]
     }
   }
 }

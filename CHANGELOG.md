@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 
 - Migrated from deprecated `server.tool()` to `server.registerTool()` API (#2)
+- npm package renamed to `@mister-good-deal/host-mcp-jenkins`
 
 ### Added
 
