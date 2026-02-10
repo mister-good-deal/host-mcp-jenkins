@@ -94,9 +94,11 @@ Add to your MCP server configuration:
 }
 ```
 
-## Available Tools (16)
+> **Note for contributors:** If you're running the MCP server from within this workspace (where `package.json` declares `"packageManager": "pnpm@..."`) and `npx` fails with `host-mcp-jenkins: not found`, use `pnpm dlx` instead. This happens because corepack intercepts `npx` when run from a pnpm-managed project.
 
-Full parity with the [Jenkins MCP Server Plugin](https://github.com/jenkinsci/mcp-server-plugin):
+## Available Tools (17)
+
+Full parity with the [Jenkins MCP Server Plugin](https://github.com/jenkinsci/mcp-server-plugin), plus extras:
 
 ### Core (8)
 
@@ -111,11 +113,12 @@ Full parity with the [Jenkins MCP Server Plugin](https://github.com/jenkinsci/mc
 | `getStatus` | Check the health and readiness status of a Jenkins instance |
 | `getQueueItem` | Get the queue item details by its ID |
 
-### Build Logs (2)
+### Build Logs (3)
 
 | Tool | Description |
 |---|---|
 | `getBuildLog` | Retrieve paginated log lines for a build |
+| `getProgressiveBuildLog` | Incrementally retrieve build logs via Jenkins progressive text API |
 | `searchBuildLog` | Search for log lines matching a pattern (string or regex) |
 
 ### SCM (4)
@@ -141,7 +144,7 @@ Full parity with the [Jenkins MCP Server Plugin](https://github.com/jenkinsci/mc
 | Installation | Requires Jenkins admin | None — runs locally |
 | Transport | SSE, Streamable HTTP, Stateless | stdio (local) |
 | Authentication | Jenkins built-in | API token over HTTP Basic |
-| Tools | 16 | 16 (full parity) |
+| Tools | 16 | 17 (full parity + progressive log) |
 | Response format | `ToolResponse` envelope | Same `ToolResponse` envelope |
 | `tree` parameter | Via internal API | Forwarded to REST API |
 

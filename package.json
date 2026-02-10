@@ -1,6 +1,6 @@
 {
     "name": "@mister-good-deal/host-mcp-jenkins",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "description": "Local MCP server for Jenkins — replicates the Jenkins MCP Server Plugin by calling Jenkins REST API, no plugin installation required",
     "packageManager": "pnpm@10.29.2",
     "type": "module",
