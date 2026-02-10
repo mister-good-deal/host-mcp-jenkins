@@ -56,6 +56,18 @@ describe("Core Tools", () => {
             expect(response.message).toContain("not found");
         });
 
+        it("should handle unexpected errors gracefully", async() => {
+            client.get.mockRejectedValueOnce(new Error("Connection refused"));
+
+            const handler = toolHandlers.get("getJob")!;
+            const result = await handler({ jobFullName: "myJob" }) as ReturnType<typeof extractToolResponse>;
+            const response = extractToolResponse(result as never);
+
+            expect(response.status).toBe("FAILED");
+            expect(response.message).toContain("Unexpected error");
+            expect(response.message).toContain("Connection refused");
+        });
+
         it("should forward tree parameter", async() => {
             client.get.mockResolvedValueOnce({ name: "test" });
 

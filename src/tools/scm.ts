@@ -7,7 +7,7 @@ import { JenkinsClientError } from "../jenkins/client.js";
 import type { JenkinsAction, JenkinsBuild, JenkinsJob, JenkinsRootInfo } from "../jenkins/types.js";
 import { jobFullNameToPath } from "../jenkins/utils.js";
 import { getLogger } from "../logger.js";
-import { toMcpResult, toolEmpty, toolNotFound, toolSuccess } from "../response.js";
+import { toMcpResult, toolEmpty, toolError, toolNotFound, toolSuccess } from "../response.js";
 
 interface GitScmConfig {
     uris: string[];
@@ -46,7 +46,7 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
                     return toMcpResult(toolNotFound("Job", jobFullName));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
@@ -83,7 +83,7 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
                     return toMcpResult(toolNotFound("Build", id));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
@@ -114,7 +114,7 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
                     return toMcpResult(toolNotFound("Build", id));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
@@ -174,7 +174,7 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
                     return toMcpResult(toolEmpty(`Failed to search jobs: ${error.message}`));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );

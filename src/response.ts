@@ -33,6 +33,16 @@ export function toolEmpty(message = "Search completed, but no results were found
 }
 
 /**
+ * Build an error ToolResponse for unexpected/unhandled errors.
+ * Unlike `toolFailure`, this is meant for truly unexpected conditions.
+ */
+export function toolError(error: unknown): ToolResponse {
+    const message = error instanceof Error ? error.message : String(error);
+
+    return { status: "FAILED", message: `Unexpected error: ${message}`, result: null };
+}
+
+/**
  * Wrap a ToolResponse as an MCP CallToolResult content block.
  */
 export function toMcpResult(response: ToolResponse) {

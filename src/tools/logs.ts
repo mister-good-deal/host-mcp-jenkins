@@ -6,7 +6,7 @@ import type { JenkinsClient } from "../jenkins/client.js";
 import { JenkinsClientError } from "../jenkins/client.js";
 import { jobFullNameToPath } from "../jenkins/utils.js";
 import { getLogger } from "../logger.js";
-import { toMcpResult, toolNotFound, toolSuccess } from "../response.js";
+import { toMcpResult, toolError, toolNotFound, toolSuccess } from "../response.js";
 
 interface BuildLogResponse {
     hasMoreContent: boolean;
@@ -100,7 +100,7 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
                     return toMcpResult(toolNotFound("Build", id));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
@@ -183,7 +183,7 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
                     return toMcpResult(toolNotFound("Build", id));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );

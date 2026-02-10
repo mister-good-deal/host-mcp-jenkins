@@ -7,7 +7,7 @@ import { JenkinsClientError } from "../jenkins/client.js";
 import type { JenkinsTestCase, JenkinsTestResult } from "../jenkins/types.js";
 import { jobFullNameToPath } from "../jenkins/utils.js";
 import { getLogger } from "../logger.js";
-import { toMcpResult, toolEmpty, toolSuccess } from "../response.js";
+import { toMcpResult, toolEmpty, toolError, toolSuccess } from "../response.js";
 
 export function registerTestTools(server: McpServer, client: JenkinsClient): void {
     const logger = getLogger();
@@ -64,7 +64,7 @@ export function registerTestTools(server: McpServer, client: JenkinsClient): voi
                     return toMcpResult(toolEmpty(`No test results found for build '${id}'. The build may not have any test report or may not exist.`));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
@@ -106,7 +106,7 @@ export function registerTestTools(server: McpServer, client: JenkinsClient): voi
                     return toMcpResult(toolEmpty(`No test results found for build '${id}'.`));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
