@@ -6,7 +6,7 @@ import type { JenkinsClient } from "../jenkins/client.js";
 import { JenkinsClientError } from "../jenkins/client.js";
 import { jobFullNameToPath } from "../jenkins/utils.js";
 import { getLogger } from "../logger.js";
-import { toMcpResult, toolNotFound, toolSuccess } from "../response.js";
+import { toMcpResult, toolError, toolNotFound, toolSuccess } from "../response.js";
 
 interface BuildLogResponse {
     hasMoreContent: boolean;
@@ -41,15 +41,18 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
     const logger = getLogger();
 
     // ── getBuildLog ──────────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "getBuildLog",
-        "Retrieves some log lines with pagination for a specific build or the last build",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job"),
-            buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
-            skip: z.number().int().optional().describe("Number of lines to skip (negative = from end)"),
-            limit: z.number().int().default(100).optional().
-                describe("Number of lines to return (positive=from start, negative=from end, default 100)")
+            description: "Retrieves some log lines with pagination for a specific build or the last build",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
+                skip: z.number().int().optional().describe("Number of lines to skip (negative = from end)"),
+                limit: z.number().int().default(100).optional().
+                    describe("Number of lines to return (positive=from start, negative=from end, default 100)")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ jobFullName, buildNumber, skip, limit = 100 }) => {
             logger.debug(`getBuildLog: ${jobFullName}#${buildNumber ?? "last"}, skip=${skip}, limit=${limit}`);
@@ -100,29 +103,76 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
                     return toMcpResult(toolNotFound("Build", id));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
+            }
+        }
+    );
+
+    // ── getProgressiveBuildLog ───────────────────────────────────────────
+    server.registerTool(
+        "getProgressiveBuildLog",
+        {
+            description: "Retrieves build log output incrementally using Jenkins progressive text API. " +
+              "Pass the returned nextByteOffset as the start parameter in subsequent calls to get only new output. " +
+              "Ideal for tailing logs of running builds without re-fetching the entire log.",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
+                start: z.number().int().min(0).default(0).
+                    optional().
+                    describe("Byte offset to start from (use nextByteOffset from previous response)")
+            },
+            annotations: { readOnlyHint: true }
+        },
+        async({ jobFullName, buildNumber, start = 0 }) => {
+            logger.debug(`getProgressiveBuildLog: ${jobFullName}#${buildNumber ?? "last"}, start=${start}`);
+
+            try {
+                const buildPath = buildNumber ? `/${buildNumber}` : "/lastBuild";
+                const path = `${jobFullNameToPath(jobFullName)}${buildPath}/logText/progressiveText`;
+                const { text, headers } = await client.getTextWithHeaders(path, { start });
+
+                const nextByteOffset = parseInt(headers.get("X-Text-Size") ?? String(start + text.length), 10);
+                const moreData = headers.get("X-More-Data") === "true";
+
+                return toMcpResult(toolSuccess({
+                    text,
+                    nextByteOffset,
+                    moreData
+                }));
+            } catch (error) {
+                if (error instanceof JenkinsClientError && error.statusCode === 404) {
+                    const id = buildNumber ? `${jobFullName}#${buildNumber}` : `${jobFullName} (last build)`;
+
+                    return toMcpResult(toolNotFound("Build", id));
+                }
+
+                return toMcpResult(toolError(error));
             }
         }
     );
 
     // ── searchBuildLog ───────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "searchBuildLog",
-        "Search for log lines matching a pattern in a specific build or the last build",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job"),
-            buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
-            pattern: z.string().describe("Search pattern (string or regex)"),
-            useRegex: z.boolean().default(false).optional().describe("Treat pattern as regex"),
-            ignoreCase: z.boolean().default(false).optional().describe("Case-insensitive search"),
-            maxMatches: z.number().int().min(1).max(MAX_SEARCH_MATCHES).
-                default(100).
-                optional().
-                describe("Maximum number of matches to return (max 1000)"),
-            contextLines: z.number().int().min(0).max(MAX_CONTEXT_LINES).
-                default(0).
-                optional().
-                describe("Number of context lines before and after each match (max 10)")
+            description: "Search for log lines matching a pattern in a specific build or the last build",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
+                pattern: z.string().describe("Search pattern (string or regex)"),
+                useRegex: z.boolean().default(false).optional().describe("Treat pattern as regex"),
+                ignoreCase: z.boolean().default(false).optional().describe("Case-insensitive search"),
+                maxMatches: z.number().int().min(1).max(MAX_SEARCH_MATCHES).
+                    default(100).
+                    optional().
+                    describe("Maximum number of matches to return (max 1000)"),
+                contextLines: z.number().int().min(0).max(MAX_CONTEXT_LINES).
+                    default(0).
+                    optional().
+                    describe("Number of context lines before and after each match (max 10)")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ jobFullName, buildNumber, pattern, useRegex = false, ignoreCase = false, maxMatches = 100, contextLines = 0 }) => {
             logger.debug(`searchBuildLog: ${jobFullName}#${buildNumber ?? "last"}, pattern="${pattern}"`);
@@ -183,7 +233,7 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
                     return toMcpResult(toolNotFound("Build", id));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );

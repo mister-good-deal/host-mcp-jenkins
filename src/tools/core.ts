@@ -7,18 +7,21 @@ import { JenkinsClientError } from "../jenkins/client.js";
 import type { JenkinsBuild, JenkinsComputerSet, JenkinsJob, JenkinsQueue, JenkinsQueueItem, JenkinsRootInfo, JenkinsUser } from "../jenkins/types.js";
 import { jobFullNameToPath } from "../jenkins/utils.js";
 import { getLogger } from "../logger.js";
-import { toMcpResult, toolFailure, toolNotFound, toolSuccess } from "../response.js";
+import { toMcpResult, toolError, toolFailure, toolNotFound, toolSuccess } from "../response.js";
 
 export function registerCoreTools(server: McpServer, client: JenkinsClient): void {
     const logger = getLogger();
 
     // ── getJob ───────────────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "getJob",
-        "Get a Jenkins job by its full path",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job (e.g., 'folder/myJob')"),
-            tree: z.string().optional().describe("Jenkins tree parameter to filter response fields")
+            description: "Get a Jenkins job by its full path",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job (e.g., 'folder/myJob')"),
+                tree: z.string().optional().describe("Jenkins tree parameter to filter response fields")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ jobFullName, tree }) => {
             logger.debug(`getJob: ${jobFullName}`);
@@ -33,24 +36,27 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                     return toMcpResult(toolNotFound("Job", jobFullName));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
 
     // ── getJobs ──────────────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "getJobs",
-        "Get a paginated list of Jenkins jobs, sorted by name",
         {
-            parentFullName: z.string().optional().describe("Full name of the parent folder (omit for root)"),
-            skip: z.number().int().min(0).default(0).
-                optional().
-                describe("Number of jobs to skip"),
-            limit: z.number().int().min(1).max(10).
-                default(10).
-                optional().
-                describe("Maximum number of jobs to return (max 10)")
+            description: "Get a paginated list of Jenkins jobs, sorted by name",
+            inputSchema: {
+                parentFullName: z.string().optional().describe("Full name of the parent folder (omit for root)"),
+                skip: z.number().int().min(0).default(0).
+                    optional().
+                    describe("Number of jobs to skip"),
+                limit: z.number().int().min(1).max(10).
+                    default(10).
+                    optional().
+                    describe("Maximum number of jobs to return (max 10)")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ parentFullName, skip = 0, limit = 10 }) => {
             logger.debug(`getJobs: parent=${parentFullName ?? "root"}, skip=${skip}, limit=${limit}`);
@@ -74,19 +80,22 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                     return toMcpResult(toolNotFound("Folder", parentFullName ?? "root"));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
 
     // ── getBuild ─────────────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "getBuild",
-        "Get a specific build or the last build of a Jenkins job",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job"),
-            buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
-            tree: z.string().optional().describe("Jenkins tree parameter to filter response fields")
+            description: "Get a specific build or the last build of a Jenkins job",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
+                tree: z.string().optional().describe("Jenkins tree parameter to filter response fields")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ jobFullName, buildNumber, tree }) => {
             logger.debug(`getBuild: ${jobFullName}#${buildNumber ?? "last"}`);
@@ -104,19 +113,22 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                     return toMcpResult(toolNotFound("Build", id));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
 
     // ── triggerBuild ─────────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "triggerBuild",
-        "Trigger a build for a Jenkins job",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job"),
-            parameters: z.record(z.unknown()).optional().
-                describe("Build parameters as key-value pairs")
+            description: "Trigger a build for a Jenkins job",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                parameters: z.record(z.unknown()).optional().
+                    describe("Build parameters as key-value pairs")
+            },
+            annotations: { readOnlyHint: false }
         },
         async({ jobFullName, parameters }) => {
             logger.debug(`triggerBuild: ${jobFullName}`);
@@ -162,20 +174,23 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                     return toMcpResult(toolNotFound("Job", jobFullName));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
 
     // ── updateBuild ──────────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "updateBuild",
-        "Update build display name and/or description",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job"),
-            buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
-            displayName: z.string().optional().describe("New display name for the build"),
-            description: z.string().optional().describe("New description for the build")
+            description: "Update build display name and/or description",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                buildNumber: z.number().int().optional().describe("Build number (omit for last build)"),
+                displayName: z.string().optional().describe("New display name for the build"),
+                description: z.string().optional().describe("New description for the build")
+            },
+            annotations: { readOnlyHint: false }
         },
         async({ jobFullName, buildNumber, displayName, description }) => {
             logger.debug(`updateBuild: ${jobFullName}#${buildNumber ?? "last"}`);
@@ -204,68 +219,83 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                     return toMcpResult(toolNotFound("Build", id));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
 
     // ── whoAmI ───────────────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "whoAmI",
-        "Get information about the currently authenticated user",
-        {},
+        {
+            description: "Get information about the currently authenticated user",
+            annotations: { readOnlyHint: true }
+        },
         async() => {
             logger.debug("whoAmI");
 
-            const user = await client.get<JenkinsUser>("/me/api/json");
+            try {
+                const user = await client.get<JenkinsUser>("/me/api/json");
 
-            return toMcpResult(toolSuccess({ fullName: user.fullName }));
+                return toMcpResult(toolSuccess({ fullName: user.fullName }));
+            } catch (error) {
+                return toMcpResult(toolError(error));
+            }
         }
     );
 
     // ── getStatus ────────────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "getStatus",
-        "Checks the health and readiness status of a Jenkins instance",
-        {},
+        {
+            description: "Checks the health and readiness status of a Jenkins instance",
+            annotations: { readOnlyHint: true }
+        },
         async() => {
             logger.debug("getStatus");
 
-            const [root, computers, queue] = await Promise.all([
-                client.get<JenkinsRootInfo>("/api/json", {
-                    tree: "quietingDown,url,nodeDescription,numExecutors"
-                }),
-                client.get<JenkinsComputerSet>("/computer/api/json", {
-                    tree: "busyExecutors,totalExecutors,computer[displayName,idle,offline,temporarilyOffline,numExecutors]"
-                }),
-                client.get<JenkinsQueue>("/queue/api/json", {
-                    tree: "items[id,task[name],why,blocked,buildable,stuck]"
-                })
-            ]);
+            try {
+                const [root, computers, queue] = await Promise.all([
+                    client.get<JenkinsRootInfo>("/api/json", {
+                        tree: "quietingDown,url,nodeDescription,numExecutors"
+                    }),
+                    client.get<JenkinsComputerSet>("/computer/api/json", {
+                        tree: "busyExecutors,totalExecutors,computer[displayName,idle,offline,temporarilyOffline,numExecutors]"
+                    }),
+                    client.get<JenkinsQueue>("/queue/api/json", {
+                        tree: "items[id,task[name],why,blocked,buildable,stuck]"
+                    })
+                ]);
 
-            const availableExecutors = computers.computer.
-                filter(c => !c.offline).
-                reduce((sum, c) => sum + c.numExecutors, 0) - computers.busyExecutors;
+                const availableExecutors = computers.computer.
+                    filter(c => !c.offline).
+                    reduce((sum, c) => sum + c.numExecutors, 0) - computers.busyExecutors;
 
-            const status: Record<string, unknown> = {
-                "Quiet Mode": root.quietingDown ?? false,
-                "Full Queue Size": queue.items.length,
-                "Buildable Queue Size": queue.items.filter(i => i.buildable).length,
-                "Available executors (any label)": availableExecutors,
-                "Root URL Status": root.url ? "configured" : "not configured"
-            };
+                const status: Record<string, unknown> = {
+                    "Quiet Mode": root.quietingDown ?? false,
+                    "Full Queue Size": queue.items.length,
+                    "Buildable Queue Size": queue.items.filter(i => i.buildable).length,
+                    "Available executors (any label)": availableExecutors,
+                    "Root URL Status": root.url ? "configured" : "not configured"
+                };
 
-            return toMcpResult(toolSuccess(status));
+                return toMcpResult(toolSuccess(status));
+            } catch (error) {
+                return toMcpResult(toolError(error));
+            }
         }
     );
 
     // ── getQueueItem ─────────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "getQueueItem",
-        "Get the queue item details by its ID",
         {
-            id: z.number().int().describe("Queue item ID"),
-            tree: z.string().optional().describe("Jenkins tree parameter to filter response fields")
+            description: "Get the queue item details by its ID",
+            inputSchema: {
+                id: z.number().int().describe("Queue item ID"),
+                tree: z.string().optional().describe("Jenkins tree parameter to filter response fields")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ id, tree }) => {
             logger.debug(`getQueueItem: ${id}`);
@@ -279,7 +309,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                     return toMcpResult(toolNotFound("Queue item", String(id)));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );

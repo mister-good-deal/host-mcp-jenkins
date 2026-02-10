@@ -146,6 +146,79 @@ describe("JenkinsClient", () => {
         });
     });
 
+    describe("retry logic", () => {
+        let retryClient: JenkinsClient;
+
+        beforeEach(() => {
+            retryClient = new JenkinsClient({
+                baseUrl: "https://jenkins.example.com",
+                user: "admin",
+                apiToken: "test-token",
+                timeout: 5000,
+                maxRetries: 2,
+                retryDelay: 10 // Very short for tests
+            });
+        });
+
+        it("should retry on 503 and succeed", async() => {
+            mockFetch.
+                mockResolvedValueOnce({ ok: false, status: 503, statusText: "Service Unavailable", text: async() => "" }).
+                mockResolvedValueOnce({ ok: true, json: async() => ({ status: "ok" }) });
+
+            const result = await retryClient.get("/api/json");
+
+            expect(result).toEqual({ status: "ok" });
+            expect(mockFetch).toHaveBeenCalledTimes(2);
+        });
+
+        it("should retry on 500 and fail after max retries", async() => {
+            const mock500 = { ok: false, status: 500, statusText: "Internal Server Error", text: async() => "error" };
+
+            mockFetch.
+                mockResolvedValueOnce(mock500).
+                mockResolvedValueOnce(mock500).
+                mockResolvedValueOnce(mock500);
+
+            await expect(retryClient.get("/api/json")).rejects.toThrow(JenkinsClientError);
+            expect(mockFetch).toHaveBeenCalledTimes(3); // initial + 2 retries
+        });
+
+        it("should not retry on 404", async() => {
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 404,
+                statusText: "Not Found",
+                text: async() => "Not Found"
+            });
+
+            await expect(retryClient.get("/job/nope/api/json")).rejects.toThrow(/not found/i);
+            expect(mockFetch).toHaveBeenCalledTimes(1);
+        });
+
+        it("should not retry on 401", async() => {
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 401,
+                statusText: "Unauthorized",
+                text: async() => "Unauthorized"
+            });
+
+            await expect(retryClient.get("/api/json")).rejects.toThrow(/Authentication failed/);
+            expect(mockFetch).toHaveBeenCalledTimes(1);
+        });
+
+        it("should retry on network errors", async() => {
+            mockFetch.
+                mockRejectedValueOnce(new TypeError("fetch failed")).
+                mockResolvedValueOnce({ ok: true, json: async() => ({ status: "ok" }) });
+
+            const result = await retryClient.get("/api/json");
+
+            expect(result).toEqual({ status: "ok" });
+            expect(mockFetch).toHaveBeenCalledTimes(2);
+        });
+    });
+
     describe("constructor", () => {
         it("should strip trailing slashes from base URL", () => {
             const c = new JenkinsClient({

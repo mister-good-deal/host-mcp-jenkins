@@ -7,7 +7,7 @@ import { JenkinsClientError } from "../jenkins/client.js";
 import type { JenkinsAction, JenkinsBuild, JenkinsJob, JenkinsRootInfo } from "../jenkins/types.js";
 import { jobFullNameToPath } from "../jenkins/utils.js";
 import { getLogger } from "../logger.js";
-import { toMcpResult, toolEmpty, toolNotFound, toolSuccess } from "../response.js";
+import { toMcpResult, toolEmpty, toolError, toolNotFound, toolSuccess } from "../response.js";
 
 interface GitScmConfig {
     uris: string[];
@@ -19,11 +19,14 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
     const logger = getLogger();
 
     // ── getJobScm ────────────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "getJobScm",
-        "Retrieves SCM configurations of a Jenkins job",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job")
+            description: "Retrieves SCM configurations of a Jenkins job",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ jobFullName }) => {
             logger.debug(`getJobScm: ${jobFullName}`);
@@ -46,18 +49,21 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
                     return toMcpResult(toolNotFound("Job", jobFullName));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
 
     // ── getBuildScm ──────────────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "getBuildScm",
-        "Retrieves SCM configurations of a Jenkins build",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job"),
-            buildNumber: z.number().int().optional().describe("Build number (omit for last build)")
+            description: "Retrieves SCM configurations of a Jenkins build",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                buildNumber: z.number().int().optional().describe("Build number (omit for last build)")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ jobFullName, buildNumber }) => {
             logger.debug(`getBuildScm: ${jobFullName}#${buildNumber ?? "last"}`);
@@ -83,18 +89,21 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
                     return toMcpResult(toolNotFound("Build", id));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
 
     // ── getBuildChangeSets ───────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "getBuildChangeSets",
-        "Retrieves change log sets of a Jenkins build",
         {
-            jobFullName: z.string().describe("Full name of the Jenkins job"),
-            buildNumber: z.number().int().optional().describe("Build number (omit for last build)")
+            description: "Retrieves change log sets of a Jenkins build",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                buildNumber: z.number().int().optional().describe("Build number (omit for last build)")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ jobFullName, buildNumber }) => {
             logger.debug(`getBuildChangeSets: ${jobFullName}#${buildNumber ?? "last"}`);
@@ -114,53 +123,67 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
                     return toMcpResult(toolNotFound("Build", id));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );
 
     // ── findJobsWithScmUrl ───────────────────────────────────────────────
-    server.tool(
+    server.registerTool(
         "findJobsWithScmUrl",
-        "Get a paginated list of Jenkins jobs that use the specified git SCM URL",
         {
-            scmUrl: z.string().describe("Git SCM URL to search for"),
-            branch: z.string().optional().describe("Branch name to filter by"),
-            skip: z.number().int().min(0).default(0).
-                optional().
-                describe("Number of jobs to skip"),
-            limit: z.number().int().min(1).max(10).
-                default(10).
-                optional().
-                describe("Maximum number of jobs to return (max 10)")
+            description: "Get a paginated list of Jenkins jobs that use the specified git SCM URL",
+            inputSchema: {
+                scmUrl: z.string().describe("Git SCM URL to search for"),
+                branch: z.string().optional().describe("Branch name to filter by"),
+                skip: z.number().int().min(0).default(0).
+                    optional().
+                    describe("Number of jobs to skip"),
+                limit: z.number().int().min(1).max(10).
+                    default(10).
+                    optional().
+                    describe("Maximum number of jobs to return (max 10)")
+            },
+            annotations: { readOnlyHint: true }
         },
         async({ scmUrl, branch, skip = 0, limit = 10 }) => {
             logger.debug(`findJobsWithScmUrl: ${scmUrl}, branch=${branch ?? "any"}`);
 
             try {
-                // Fetch all jobs recursively with SCM info
-                const data = await client.get<JenkinsRootInfo>("/api/json", {
-                    tree: "jobs[name,fullName,url,color,scm[userRemoteConfigs[url],branches[name]],actions[remoteUrls]]"
-                });
+                // Recursive tree query that descends into nested folders (3 levels deep)
+                const jobFields = "name,fullName,url,color,scm[userRemoteConfigs[url],branches[name]],actions[remoteUrls]";
+                const tree = `jobs[${jobFields},jobs[${jobFields},jobs[${jobFields}]]]`;
+
+                const data = await client.get<JenkinsRootInfo>("/api/json", { tree });
 
                 const allJobs = flattenJobs(data.jobs ?? []);
 
-                // Filter by SCM URL
-                const matching = allJobs.filter(job => {
+                // Filter by SCM URL with early termination
+                const matching: JenkinsJob[] = [];
+                const target = skip + limit;
+
+                for (const job of allJobs) {
                     const scmUrls = extractJobScmUrls(job);
 
                     if (!scmUrls.some(u => looselyMatchesUrl(u, scmUrl))) {
-                        return false;
+                        continue;
                     }
 
                     if (branch) {
                         const branches = extractJobBranches(job);
 
-                        return branches.some(b => matchesBranch(b, branch));
+                        if (!branches.some(b => matchesBranch(b, branch))) {
+                            continue;
+                        }
                     }
 
-                    return true;
-                });
+                    matching.push(job);
+
+                    // Stop early once we have enough matches for the requested page
+                    if (matching.length >= target) {
+                        break;
+                    }
+                }
 
                 const paged = matching.slice(skip, skip + limit);
 
@@ -174,7 +197,7 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
                     return toMcpResult(toolEmpty(`Failed to search jobs: ${error.message}`));
                 }
 
-                throw error;
+                return toMcpResult(toolError(error));
             }
         }
     );

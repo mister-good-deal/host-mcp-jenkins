@@ -1,6 +1,9 @@
 import { Command } from "commander";
 
 import type { LogLevel } from "./logger.js";
+import { VERSION } from "./version.js";
+
+export type TransportType = "stdio" | "http";
 
 export interface Config {
     jenkinsUrl: string;
@@ -9,6 +12,10 @@ export interface Config {
     insecure: boolean;
     logLevel: LogLevel;
     timeout: number;
+    maxRetries: number;
+    retryDelay: number;
+    transport: TransportType;
+    port: number;
 }
 
 export function parseConfig(argv: string[] = process.argv): Config {
@@ -17,7 +24,7 @@ export function parseConfig(argv: string[] = process.argv): Config {
     program.
         name("host-mcp-jenkins").
         description("Local MCP server for Jenkins — replicates Jenkins MCP Server Plugin via REST API").
-        version("0.1.0").
+        version(VERSION).
         option(
             "--jenkins-url <url>",
             "Jenkins base URL",
@@ -47,6 +54,26 @@ export function parseConfig(argv: string[] = process.argv): Config {
             "--timeout <ms>",
             "HTTP request timeout in milliseconds",
             process.env.JENKINS_TIMEOUT ?? "30000"
+        ).
+        option(
+            "--max-retries <count>",
+            "Maximum number of retries for transient errors",
+            process.env.JENKINS_MAX_RETRIES ?? "3"
+        ).
+        option(
+            "--retry-delay <ms>",
+            "Base delay in ms for exponential backoff between retries",
+            process.env.JENKINS_RETRY_DELAY ?? "1000"
+        ).
+        option(
+            "--transport <type>",
+            "MCP transport type (stdio or http)",
+            process.env.MCP_TRANSPORT ?? "stdio"
+        ).
+        option(
+            "--port <port>",
+            "HTTP server port (only used with --transport http)",
+            process.env.MCP_PORT ?? "3000"
         );
 
     program.parse(argv);
@@ -59,7 +86,11 @@ export function parseConfig(argv: string[] = process.argv): Config {
         jenkinsApiToken: opts.jenkinsToken,
         insecure: opts.insecure ?? false,
         logLevel: opts.logLevel as LogLevel,
-        timeout: parseInt(String(opts.timeout), 10)
+        timeout: parseInt(String(opts.timeout), 10),
+        maxRetries: parseInt(String(opts.maxRetries), 10),
+        retryDelay: parseInt(String(opts.retryDelay), 10),
+        transport: opts.transport as TransportType,
+        port: parseInt(String(opts.port), 10)
     };
 
     validate(config);
@@ -94,6 +125,16 @@ function validate(config: Config): void {
 
     if (isNaN(config.timeout) || config.timeout <= 0) {
         throw new Error(`Invalid timeout: ${config.timeout}. Must be a positive number.`);
+    }
+
+    const validTransports: TransportType[] = ["stdio", "http"];
+
+    if (!validTransports.includes(config.transport)) {
+        throw new Error(`Invalid transport: ${config.transport}. Must be one of: ${validTransports.join(", ")}`);
+    }
+
+    if (config.transport === "http" && (isNaN(config.port) || config.port <= 0 || config.port > 65535)) {
+        throw new Error(`Invalid port: ${config.port}. Must be between 1 and 65535.`);
     }
 
     // Normalize URL — remove trailing slash
