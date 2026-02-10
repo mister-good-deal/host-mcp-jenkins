@@ -2,12 +2,8 @@ import { jest } from "@jest/globals";
 
 import type { JenkinsClient } from "../../../src/jenkins/client.js";
 import { JenkinsClientError } from "../../../src/jenkins/client.js";
-import { initLogger } from "../../../src/logger.js";
 
-// Initialize logger for tests (silent)
-beforeAll(() => {
-    initLogger("error");
-});
+// Logger is now silenced globally in tests/unit/setup.ts
 
 /**
  * Create a mock JenkinsClient for testing tools.

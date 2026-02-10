@@ -19,6 +19,7 @@ const config: JestConfigWithTsJest = {
     moduleFileExtensions: ["ts", "js", "json"],
     transformIgnorePatterns: ["node_modules/(?!(@modelcontextprotocol)/)"],
     testMatch: ["**/tests/unit/**/*.test.ts"],
+    setupFiles: ["./tests/unit/setup.ts"],
     collectCoverageFrom: [
         "src/**/*.ts",
         "!src/index.ts"
