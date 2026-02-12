@@ -62,7 +62,9 @@ export function registerTestTools(server: McpServer, client: JenkinsClient): voi
                     const id = buildNumber ? `${jobFullName}#${buildNumber}` : `${jobFullName} (last build)`;
 
                     // 404 on testReport means either build not found or no test results
-                    return toMcpResult(toolEmpty(`No test results found for build '${id}'. The build may not have any test report or may not exist.`));
+                    return toMcpResult(
+                        toolEmpty(`No test results found for build '${id}'. The build may not have any test report or may not exist.`)
+                    );
                 }
 
                 return toMcpResult(toolError(error));
@@ -121,7 +123,11 @@ function extractFailingTests(testResult: JenkinsTestResult): JenkinsTestCase[] {
 
     if (!testResult.suites) return failing;
 
-    for (const suite of testResult.suites) for (const testCase of suite.cases) if (testCase.status === "FAILED" || testCase.status === "REGRESSION") failing.push(testCase);
+    for (const suite of testResult.suites) {
+        for (const testCase of suite.cases) {
+            if (testCase.status === "FAILED" || testCase.status === "REGRESSION") failing.push(testCase);
+        }
+    }
 
     return failing;
 }
@@ -131,10 +137,14 @@ function extractFlakyTests(testResult: JenkinsTestResult): JenkinsTestCase[] {
 
     if (!testResult.suites) return flaky;
 
-    for (const suite of testResult.suites) for (const testCase of suite.cases) {
-        const tc = testCase as unknown as Record<string, unknown>; /* flaky check */
+    for (const suite of testResult.suites) {
+        for (const testCase of suite.cases) {
+            const tc = testCase as unknown as Record<string, unknown>; /* flaky check */
 
-        if (tc.flakyFailures && Array.isArray(tc.flakyFailures) && (tc.flakyFailures as unknown[]).length > 0) flaky.push(testCase);
+            if (tc.flakyFailures && Array.isArray(tc.flakyFailures) && (tc.flakyFailures as unknown[]).length > 0) {
+                flaky.push(testCase);
+            }
+        }
     }
 
     return flaky;

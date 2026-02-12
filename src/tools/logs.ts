@@ -172,7 +172,10 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
             },
             annotations: { readOnlyHint: true }
         },
-        async({ jobFullName, buildNumber, pattern, useRegex = false, ignoreCase = false, maxMatches = 100, contextLines = 0 }) => {
+        async({
+            jobFullName, buildNumber, pattern,
+            useRegex = false, ignoreCase = false, maxMatches = 100, contextLines = 0
+        }) => {
             logger.debug(`searchBuildLog: ${jobFullName}#${buildNumber ?? "last"}, pattern="${pattern}"`);
 
             try {
@@ -193,19 +196,21 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
                 const matches: SearchMatch[] = [];
                 let matchCount = 0;
 
-                for (let i = 0; i < totalLines; i++) if (regex.test(allLines[i])) {
-                    matchCount++;
+                for (let i = 0; i < totalLines; i++) {
+                    if (regex.test(allLines[i])) {
+                        matchCount++;
 
-                    if (matches.length < maxMatches) {
-                        const ctxStart = Math.max(0, i - contextLines);
-                        const ctxEnd = Math.min(totalLines, i + contextLines + 1);
+                        if (matches.length < maxMatches) {
+                            const ctxStart = Math.max(0, i - contextLines);
+                            const ctxEnd = Math.min(totalLines, i + contextLines + 1);
 
-                        matches.push({
-                            lineNumber: i + 1, // 1-indexed
-                            line: allLines[i],
-                            contextBefore: allLines.slice(ctxStart, i),
-                            contextAfter: allLines.slice(i + 1, ctxEnd)
-                        });
+                            matches.push({
+                                lineNumber: i + 1, // 1-indexed
+                                line: allLines[i],
+                                contextBefore: allLines.slice(ctxStart, i),
+                                contextAfter: allLines.slice(i + 1, ctxEnd)
+                            });
+                        }
                     }
                 }
 

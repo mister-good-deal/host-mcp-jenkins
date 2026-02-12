@@ -51,7 +51,7 @@ export default tsEslint.config(
                 }
             ],
             "no-dupe-class-members": "off", // Allow overloads in classes with TS
-            "curly": ["error", "multi"]
+            "curly": ["error", "multi-line"]
         }
     },
 
@@ -85,7 +85,7 @@ export default tsEslint.config(
             "@stylistic/no-multiple-empty-lines": ["error", { max: 1, maxEOF: 1, maxBOF: 0 }],
             "@stylistic/nonblock-statement-body-position": "error",
             "@stylistic/space-before-function-paren": ["error", "never"],
-            "@stylistic/newline-per-chained-call": ["error", { ignoreChainWithDepth: 4 }],
+            "@stylistic/newline-per-chained-call": ["error", { ignoreChainWithDepth: 8 }],
             "@stylistic/padding-line-between-statements": [
                 "error",
                 // Always add a blank line before those statements unless they are the first statement in a block

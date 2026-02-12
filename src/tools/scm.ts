@@ -43,7 +43,9 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
 
                 return toMcpResult(toolSuccess(configs));
             } catch (error) {
-                if (error instanceof JenkinsClientError && error.statusCode === 404) return toMcpResult(toolNotFound("Job", jobFullName));
+                if (error instanceof JenkinsClientError && error.statusCode === 404) {
+                    return toMcpResult(toolNotFound("Job", jobFullName));
+                }
 
                 return toMcpResult(toolError(error));
             }
@@ -179,7 +181,9 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
 
                 return toMcpResult(toolSuccess(paged));
             } catch (error) {
-                if (error instanceof JenkinsClientError) return toMcpResult(toolEmpty(`Failed to search jobs: ${error.message}`));
+                if (error instanceof JenkinsClientError) {
+                    return toMcpResult(toolEmpty(`Failed to search jobs: ${error.message}`));
+                }
 
                 return toMcpResult(toolError(error));
             }
@@ -206,10 +210,12 @@ function extractScmFromJob(job: JenkinsJob): GitScmConfig[] {
     }
 
     // From Git build actions
-    if (job.actions) for (const action of job.actions) {
-        const scm = extractScmFromAction(action);
+    if (job.actions) {
+        for (const action of job.actions) {
+            const scm = extractScmFromAction(action);
 
-        if (scm) configs.push(scm);
+            if (scm) configs.push(scm);
+        }
     }
 
     return configs;
@@ -239,7 +245,11 @@ function extractScmFromAction(action: JenkinsAction): GitScmConfig | null {
     if (action.lastBuiltRevision) {
         commit = action.lastBuiltRevision.SHA1;
 
-        if (action.lastBuiltRevision.branch) for (const b of action.lastBuiltRevision.branch) if (b.name) branches.push(b.name);
+        if (action.lastBuiltRevision.branch) {
+            for (const b of action.lastBuiltRevision.branch) {
+                if (b.name) branches.push(b.name);
+            }
+        }
     }
 
     return { uris, branches, commit };

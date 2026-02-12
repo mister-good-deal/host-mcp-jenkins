@@ -15,9 +15,10 @@ export function jobFullNameToPath(jobFullName: string): string {
 export function buildQueryString(params: Record<string, string | number | boolean | undefined | null>): string {
     const parts: string[] = [];
 
-    // eslint-disable-next-line curly -- readability-allowing for simple if statement
     for (const [key, value] of Object.entries(params)) {
-        if (value !== undefined && value !== null) parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`);
+        if (value !== undefined && value !== null) {
+            parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`);
+        }
     }
 
     return parts.length > 0 ? `?${parts.join("&")}` : "";
