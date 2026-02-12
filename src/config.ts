@@ -111,15 +111,23 @@ function validate(config: Config): void {
 
     const validLevels: LogLevel[] = ["debug", "info", "warn", "error"];
 
-    if (!validLevels.includes(config.logLevel)) throw new Error(`Invalid log level: ${config.logLevel}. Must be one of: ${validLevels.join(", ")}`);
+    if (!validLevels.includes(config.logLevel)) {
+        throw new Error(`Invalid log level: ${config.logLevel}. Must be one of: ${validLevels.join(", ")}`);
+    }
 
-    if (isNaN(config.timeout) || config.timeout <= 0) throw new Error(`Invalid timeout: ${config.timeout}. Must be a positive number.`);
+    if (isNaN(config.timeout) || config.timeout <= 0) {
+        throw new Error(`Invalid timeout: ${config.timeout}. Must be a positive number.`);
+    }
 
     const validTransports: TransportType[] = ["stdio", "http"];
 
-    if (!validTransports.includes(config.transport)) throw new Error(`Invalid transport: ${config.transport}. Must be one of: ${validTransports.join(", ")}`);
+    if (!validTransports.includes(config.transport)) {
+        throw new Error(`Invalid transport: ${config.transport}. Must be one of: ${validTransports.join(", ")}`);
+    }
 
-    if (config.transport === "http" && (isNaN(config.port) || config.port <= 0 || config.port > 65535)) throw new Error(`Invalid port: ${config.port}. Must be between 1 and 65535.`);
+    if (config.transport === "http" && (isNaN(config.port) || config.port <= 0 || config.port > 65535)) {
+        throw new Error(`Invalid port: ${config.port}. Must be between 1 and 65535.`);
+    }
 
     // Normalize URL — remove trailing slash
     config.jenkinsUrl = config.jenkinsUrl.replace(/\/+$/, "");

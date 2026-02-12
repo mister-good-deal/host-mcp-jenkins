@@ -17,12 +17,14 @@ export function createIntegrationClient(): JenkinsClient {
 export async function waitForJenkins(client: JenkinsClient, timeoutMs = 120_000): Promise<void> {
     const start = Date.now();
 
-    while (Date.now() - start < timeoutMs) try {
-        await client.get("/api/json", { tree: "mode" });
+    while (Date.now() - start < timeoutMs) {
+        try {
+            await client.get("/api/json", { tree: "mode" });
 
-        return;
-    } catch {
-        await new Promise(r => setTimeout(r, 2000));
+            return;
+        } catch {
+            await new Promise(r => setTimeout(r, 2000));
+        }
     }
 
     throw new Error(`Jenkins did not become ready within ${timeoutMs}ms`);
