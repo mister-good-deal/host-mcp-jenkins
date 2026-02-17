@@ -40,7 +40,11 @@ const MAX_CONTEXT_LINES = 10;
 export function registerLogTools(server: McpServer, client: JenkinsClient): void {
     const logger = getLogger();
 
-    // ── getBuildLog ──────────────────────────────────────────────────────
+    /*
+     * ── getBuildLog ──────────────────────────────────────────────────────
+     * Jenkins API: GET /job/{name}/{buildNumber}/consoleText
+     * @see https://javadoc.jenkins.io/hudson/model/Run.html
+     */
     server.registerTool(
         "getBuildLog",
         {
@@ -106,7 +110,11 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
         }
     );
 
-    // ── getProgressiveBuildLog ───────────────────────────────────────────
+    /*
+     * ── getProgressiveBuildLog ───────────────────────────────────────────
+     * Jenkins API: GET /job/{name}/{buildNumber}/logText/progressiveText
+     * @see https://javadoc.jenkins.io/hudson/model/Run.html
+     */
     server.registerTool(
         "getProgressiveBuildLog",
         {
@@ -150,7 +158,11 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
         }
     );
 
-    // ── searchBuildLog ───────────────────────────────────────────────────
+    /*
+     * ── searchBuildLog ───────────────────────────────────────────────────
+     * Jenkins API: GET /job/{name}/{buildNumber}/consoleText (fetches log then searches in-memory)
+     * @see https://javadoc.jenkins.io/hudson/model/Run.html
+     */
     server.registerTool(
         "searchBuildLog",
         {

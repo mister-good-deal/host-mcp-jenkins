@@ -12,7 +12,11 @@ import { toMcpResult, toolError, toolFailure, toolNotFound, toolSuccess } from "
 export function registerCoreTools(server: McpServer, client: JenkinsClient): void {
     const logger = getLogger();
 
-    // ── getJob ───────────────────────────────────────────────────────────
+    /*
+     * ── getJob ───────────────────────────────────────────────────────────
+     * Jenkins API: GET /job/{name}/api/json
+     * @see https://www.jenkins.io/doc/book/using/remote-access-api/
+     */
     server.registerTool(
         "getJob",
         {
@@ -41,7 +45,11 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
         }
     );
 
-    // ── getJobs ──────────────────────────────────────────────────────────
+    /*
+     * ── getJobs ──────────────────────────────────────────────────────────
+     * Jenkins API: GET /api/json (root) or GET /job/{folder}/api/json
+     * @see https://www.jenkins.io/doc/book/using/remote-access-api/
+     */
     server.registerTool(
         "getJobs",
         {
@@ -85,7 +93,11 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
         }
     );
 
-    // ── getBuild ─────────────────────────────────────────────────────────
+    /*
+     * ── getBuild ─────────────────────────────────────────────────────────
+     * Jenkins API: GET /job/{name}/{buildNumber}/api/json or /job/{name}/lastBuild/api/json
+     * @see https://www.jenkins.io/doc/book/using/remote-access-api/
+     */
     server.registerTool(
         "getBuild",
         {
@@ -118,7 +130,11 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
         }
     );
 
-    // ── triggerBuild ─────────────────────────────────────────────────────
+    /*
+     * ── triggerBuild ─────────────────────────────────────────────────────
+     * Jenkins API: POST /job/{name}/build or /job/{name}/buildWithParameters
+     * @see https://www.jenkins.io/doc/book/using/remote-access-api/#RemoteaccessAPI-Submittingjobs
+     */
     server.registerTool(
         "triggerBuild",
         {
@@ -177,7 +193,11 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
         }
     );
 
-    // ── updateBuild ──────────────────────────────────────────────────────
+    /*
+     * ── updateBuild ──────────────────────────────────────────────────────
+     * Jenkins API: POST /job/{name}/{buildNumber}/submitDescription and /job/{name}/{buildNumber}/configSubmit
+     * @see https://javadoc.jenkins.io/hudson/model/Run.html
+     */
     server.registerTool(
         "updateBuild",
         {
@@ -222,7 +242,11 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
         }
     );
 
-    // ── whoAmI ───────────────────────────────────────────────────────────
+    /*
+     * ── whoAmI ───────────────────────────────────────────────────────────
+     * Jenkins API: GET /me/api/json
+     * @see https://javadoc.jenkins.io/hudson/model/User.html
+     */
     server.registerTool(
         "whoAmI",
         {
@@ -242,7 +266,13 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
         }
     );
 
-    // ── getStatus ────────────────────────────────────────────────────────
+    /*
+     * ── getStatus ────────────────────────────────────────────────────────
+     * Jenkins API: GET /api/json, GET /computer/api/json, GET /queue/api/json
+     * @see https://www.jenkins.io/doc/book/using/remote-access-api/
+     * @see https://javadoc.jenkins.io/hudson/model/Computer.html
+     * @see https://javadoc.jenkins.io/hudson/model/Queue.html
+     */
     server.registerTool(
         "getStatus",
         {
@@ -284,7 +314,11 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
         }
     );
 
-    // ── getQueueItem ─────────────────────────────────────────────────────
+    /*
+     * ── getQueueItem ─────────────────────────────────────────────────────
+     * Jenkins API: GET /queue/item/{id}/api/json
+     * @see https://javadoc.jenkins.io/hudson/model/Queue.html
+     */
     server.registerTool(
         "getQueueItem",
         {

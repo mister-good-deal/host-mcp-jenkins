@@ -12,7 +12,11 @@ import { toMcpResult, toolEmpty, toolError, toolSuccess } from "../response.js";
 export function registerTestTools(server: McpServer, client: JenkinsClient): void {
     const logger = getLogger();
 
-    // ── getTestResults ───────────────────────────────────────────────────
+    /*
+     * ── getTestResults ───────────────────────────────────────────────────
+     * Jenkins API: GET /job/{name}/{buildNumber}/testReport/api/json
+     * @see https://javadoc.jenkins.io/hudson/tasks/junit/TestResult.html
+     */
     server.registerTool(
         "getTestResults",
         {
@@ -72,7 +76,11 @@ export function registerTestTools(server: McpServer, client: JenkinsClient): voi
         }
     );
 
-    // ── getFlakyFailures ─────────────────────────────────────────────────
+    /*
+     * ── getFlakyFailures ─────────────────────────────────────────────────
+     * Jenkins API: GET /job/{name}/{buildNumber}/testReport/api/json
+     * @see https://javadoc.jenkins.io/hudson/tasks/junit/TestResult.html
+     */
     server.registerTool(
         "getFlakyFailures",
         {
