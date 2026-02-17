@@ -89,9 +89,7 @@ export class JenkinsClient {
             signal: AbortSignal.timeout(this.timeout)
         });
 
-        if (!response.ok) {
-            await this.handleError(response, url);
-        }
+        if (!response.ok) await this.handleError(response, url);
 
         const text = await response.text();
 
@@ -141,19 +139,13 @@ export class JenkinsClient {
          * Jenkins returns 201 for build trigger with Location header
          * and sometimes 302 redirect
          */
-        if (response.status === 201 || response.status === 302) {
-            return { data: null, location };
-        }
+        if (response.status === 201 || response.status === 302) return { data: null, location };
 
-        if (!response.ok) {
-            await this.handleError(response, url);
-        }
+        if (!response.ok) await this.handleError(response, url);
 
         const text = await response.text();
 
-        if (text.length === 0) {
-            return { data: null, location };
-        }
+        if (text.length === 0) return { data: null, location };
 
         try {
             return { data: JSON.parse(text) as T, location };
@@ -191,9 +183,7 @@ export class JenkinsClient {
             signal: AbortSignal.timeout(this.timeout)
         });
 
-        if (!response.ok) {
-            await this.handleError(response, url);
-        }
+        if (!response.ok) await this.handleError(response, url);
 
         return response.json() as Promise<T>;
     }
@@ -209,9 +199,7 @@ export class JenkinsClient {
             signal: AbortSignal.timeout(this.timeout)
         });
 
-        if (!response.ok) {
-            await this.handleError(response, url);
-        }
+        if (!response.ok) await this.handleError(response, url);
 
         return response.text();
     }
@@ -242,9 +230,7 @@ export class JenkinsClient {
                 lastError = error;
 
                 // Don't retry AbortError (timeout) — the caller set an explicit timeout
-                if (error instanceof DOMException && error.name === "AbortError") {
-                    throw error;
-                }
+                if (error instanceof DOMException && error.name === "AbortError") throw error;
 
                 if (attempt < this.maxRetries) {
                     const delay = this.computeBackoff(attempt);

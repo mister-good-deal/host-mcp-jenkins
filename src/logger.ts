@@ -6,11 +6,12 @@ const logFormat = printf(({ level, message, timestamp: ts }) => `${ts} [${level}
 
 let logger: winston.Logger;
 
-export type LogLevel = "debug" | "info" | "warn" | "error";
+export type LogLevel = "debug" | "info" | "warn" | "error" | "silent";
 
 export function initLogger(level: LogLevel = "info"): winston.Logger {
     logger = winston.createLogger({
-        level,
+        level: level === "silent" ? "error" : level,
+        silent: level === "silent",
         format: combine(
             timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
             colorize(),
@@ -27,9 +28,7 @@ export function initLogger(level: LogLevel = "info"): winston.Logger {
 }
 
 export function getLogger(): winston.Logger {
-    if (!logger) {
-        return initLogger();
-    }
+    if (!logger) return initLogger();
 
     return logger;
 }

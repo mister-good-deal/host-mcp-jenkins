@@ -39,9 +39,7 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
 
                 const configs = extractScmFromJob(job);
 
-                if (configs.length === 0) {
-                    return toMcpResult(toolEmpty("No SCM configurations found for this job."));
-                }
+                if (configs.length === 0) return toMcpResult(toolEmpty("No SCM configurations found for this job."));
 
                 return toMcpResult(toolSuccess(configs));
             } catch (error) {
@@ -77,9 +75,7 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
 
                 const configs = extractScmFromBuild(build);
 
-                if (configs.length === 0) {
-                    return toMcpResult(toolEmpty("No SCM configurations found for this build."));
-                }
+                if (configs.length === 0) return toMcpResult(toolEmpty("No SCM configurations found for this build."));
 
                 return toMcpResult(toolSuccess(configs));
             } catch (error) {
@@ -165,31 +161,23 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
                 for (const job of allJobs) {
                     const scmUrls = extractJobScmUrls(job);
 
-                    if (!scmUrls.some(u => looselyMatchesUrl(u, scmUrl))) {
-                        continue;
-                    }
+                    if (!scmUrls.some(u => looselyMatchesUrl(u, scmUrl))) continue;
 
                     if (branch) {
                         const branches = extractJobBranches(job);
 
-                        if (!branches.some(b => matchesBranch(b, branch))) {
-                            continue;
-                        }
+                        if (!branches.some(b => matchesBranch(b, branch))) continue;
                     }
 
                     matching.push(job);
 
                     // Stop early once we have enough matches for the requested page
-                    if (matching.length >= target) {
-                        break;
-                    }
+                    if (matching.length >= target) break;
                 }
 
                 const paged = matching.slice(skip, skip + limit);
 
-                if (paged.length === 0) {
-                    return toMcpResult(toolEmpty("No jobs found matching the specified SCM URL."));
-                }
+                if (paged.length === 0) return toMcpResult(toolEmpty("No jobs found matching the specified SCM URL."));
 
                 return toMcpResult(toolSuccess(paged));
             } catch (error) {
@@ -218,9 +206,7 @@ function extractScmFromJob(job: JenkinsJob): GitScmConfig[] {
             map(b => b.name).
             filter((n): n is string => !!n) ?? [];
 
-        if (uris.length > 0) {
-            configs.push({ uris, branches });
-        }
+        if (uris.length > 0) configs.push({ uris, branches });
     }
 
     // From Git build actions
@@ -228,9 +214,7 @@ function extractScmFromJob(job: JenkinsJob): GitScmConfig[] {
         for (const action of job.actions) {
             const scm = extractScmFromAction(action);
 
-            if (scm) {
-                configs.push(scm);
-            }
+            if (scm) configs.push(scm);
         }
     }
 
@@ -240,25 +224,19 @@ function extractScmFromJob(job: JenkinsJob): GitScmConfig[] {
 function extractScmFromBuild(build: JenkinsBuild): GitScmConfig[] {
     const configs: GitScmConfig[] = [];
 
-    if (!build.actions) {
-        return configs;
-    }
+    if (!build.actions) return configs;
 
     for (const action of build.actions) {
         const scm = extractScmFromAction(action);
 
-        if (scm) {
-            configs.push(scm);
-        }
+        if (scm) configs.push(scm);
     }
 
     return configs;
 }
 
 function extractScmFromAction(action: JenkinsAction): GitScmConfig | null {
-    if (!action.remoteUrls?.length) {
-        return null;
-    }
+    if (!action.remoteUrls?.length) return null;
 
     const uris = action.remoteUrls;
     const branches: string[] = [];
@@ -269,9 +247,7 @@ function extractScmFromAction(action: JenkinsAction): GitScmConfig | null {
 
         if (action.lastBuiltRevision.branch) {
             for (const b of action.lastBuiltRevision.branch) {
-                if (b.name) {
-                    branches.push(b.name);
-                }
+                if (b.name) branches.push(b.name);
             }
         }
     }
@@ -282,21 +258,9 @@ function extractScmFromAction(action: JenkinsAction): GitScmConfig | null {
 function extractJobScmUrls(job: JenkinsJob): string[] {
     const urls: string[] = [];
 
-    if (job.scm?.userRemoteConfigs) {
-        for (const c of job.scm.userRemoteConfigs) {
-            if (c.url) {
-                urls.push(c.url);
-            }
-        }
-    }
+    if (job.scm?.userRemoteConfigs) for (const c of job.scm.userRemoteConfigs) if (c.url) urls.push(c.url);
 
-    if (job.actions) {
-        for (const action of job.actions) {
-            if (action.remoteUrls) {
-                urls.push(...action.remoteUrls);
-            }
-        }
-    }
+    if (job.actions) for (const action of job.actions) if (action.remoteUrls) urls.push(...action.remoteUrls);
 
     return urls;
 }
@@ -304,13 +268,7 @@ function extractJobScmUrls(job: JenkinsJob): string[] {
 function extractJobBranches(job: JenkinsJob): string[] {
     const branches: string[] = [];
 
-    if (job.scm?.branches) {
-        for (const b of job.scm.branches) {
-            if (b.name) {
-                branches.push(b.name);
-            }
-        }
-    }
+    if (job.scm?.branches) for (const b of job.scm.branches) if (b.name) branches.push(b.name);
 
     return branches;
 }
@@ -338,9 +296,7 @@ function matchesBranch(spec: string, branch: string): boolean {
     const normalizedSpec = spec.replace(/^\*\//, "");
     const normalizedBranch = branch.replace(/^refs\/remotes\/origin\//, "").replace(/^origin\//, "");
 
-    if (spec === "**") {
-        return true;
-    }
+    if (spec === "**") return true;
 
     return normalizedSpec === normalizedBranch;
 }
@@ -349,16 +305,6 @@ function matchesBranch(spec: string, branch: string): boolean {
  * Recursively flatten a nested job tree (folders contain jobs).
  */
 function flattenJobs(jobs: JenkinsJob[]): JenkinsJob[] {
-    const result: JenkinsJob[] = [];
-
-    for (const job of jobs) {
-        if (job.jobs) {
-            // This is a folder — recurse
-            result.push(...flattenJobs(job.jobs));
-        } else {
-            result.push(job);
-        }
-    }
-
-    return result;
+    // eslint-disable-next-line @stylistic/no-confusing-arrow
+    return jobs.flatMap(job => job.jobs ? flattenJobs(job.jobs) : [job]);
 }

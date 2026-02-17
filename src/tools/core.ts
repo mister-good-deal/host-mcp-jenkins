@@ -147,9 +147,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                         `${jobPath}/buildWithParameters`,
                         formData
                     );
-                } else {
-                    result = await client.post<JenkinsQueueItem>(`${jobPath}/build`);
-                }
+                } else result = await client.post<JenkinsQueueItem>(`${jobPath}/build`);
 
                 // Try to fetch queue item from Location header
                 if (result.location) {
@@ -160,7 +158,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
 
                         return toMcpResult(toolSuccess(queueItem, "Build triggered successfully."));
                     } catch {
-                        // If we can't fetch queue item, still report success
+                    // If we can't fetch queue item, still report success
                         return toMcpResult(toolSuccess(
                             { queueLocation: result.location },
                             "Build triggered successfully."

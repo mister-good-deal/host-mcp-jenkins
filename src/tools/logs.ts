@@ -65,9 +65,7 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
                 const allLines = rawLog.split("\n");
 
                 // Remove trailing empty line from split
-                if (allLines.length > 0 && allLines[allLines.length - 1] === "") {
-                    allLines.pop();
-                }
+                if (allLines.length > 0 && allLines[allLines.length - 1] === "") allLines.pop();
 
                 const totalLines = allLines.length;
                 const effectiveLimit = Math.min(Math.abs(limit), MAX_LOG_LINES);
@@ -174,7 +172,10 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
             },
             annotations: { readOnlyHint: true }
         },
-        async({ jobFullName, buildNumber, pattern, useRegex = false, ignoreCase = false, maxMatches = 100, contextLines = 0 }) => {
+        async({
+            jobFullName, buildNumber, pattern,
+            useRegex = false, ignoreCase = false, maxMatches = 100, contextLines = 0
+        }) => {
             logger.debug(`searchBuildLog: ${jobFullName}#${buildNumber ?? "last"}, pattern="${pattern}"`);
 
             try {
@@ -184,9 +185,7 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
 
                 const allLines = rawLog.split("\n");
 
-                if (allLines.length > 0 && allLines[allLines.length - 1] === "") {
-                    allLines.pop();
-                }
+                if (allLines.length > 0 && allLines[allLines.length - 1] === "") allLines.pop();
 
                 const totalLines = allLines.length;
                 const flags = ignoreCase ? "i" : "";

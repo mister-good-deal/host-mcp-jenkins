@@ -101,21 +101,13 @@ export function parseConfig(argv: string[] = process.argv): Config {
 function validate(config: Config): void {
     const missing: string[] = [];
 
-    if (!config.jenkinsUrl) {
-        missing.push("--jenkins-url or JENKINS_URL");
-    }
+    if (!config.jenkinsUrl) missing.push("--jenkins-url or JENKINS_URL");
 
-    if (!config.jenkinsUser) {
-        missing.push("--jenkins-user or JENKINS_USER");
-    }
+    if (!config.jenkinsUser) missing.push("--jenkins-user or JENKINS_USER");
 
-    if (!config.jenkinsApiToken) {
-        missing.push("--jenkins-token or JENKINS_API_TOKEN");
-    }
+    if (!config.jenkinsApiToken) missing.push("--jenkins-token or JENKINS_API_TOKEN");
 
-    if (missing.length > 0) {
-        throw new Error(`Missing required configuration: ${missing.join(", ")}`);
-    }
+    if (missing.length > 0) throw new Error(`Missing required configuration: ${missing.join(", ")}`);
 
     const validLevels: LogLevel[] = ["debug", "info", "warn", "error"];
 

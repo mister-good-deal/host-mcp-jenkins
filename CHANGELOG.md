@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Enforced single-line braceless conditionals via ESLint `curly: multi` rule, auto-fixed 76 occurrences across the codebase
+- Refactored `flattenJobs` to use `flatMap` for cleaner expression
+- Corrected too-long one-liners for consistent code style
+
+### Added
+
+- `CLAUDE.md` with project context and conventions for AI-assisted development
+- Jenkins API compatibility version in README documentation
+- Silent log level for winston logger and global test setup (`tests/unit/setup.ts`) to suppress logger output during unit tests
+
 ## [0.2.3] - 2026-02-10
 
 ### Fixed
