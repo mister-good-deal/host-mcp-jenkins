@@ -18,7 +18,11 @@ interface GitScmConfig {
 export function registerScmTools(server: McpServer, client: JenkinsClient): void {
     const logger = getLogger();
 
-    // ── getJobScm ────────────────────────────────────────────────────────
+    /*
+     * ── getJobScm ────────────────────────────────────────────────────────
+     * Jenkins API: GET /job/{name}/api/json (with SCM tree filter)
+     * @see https://www.jenkins.io/doc/book/using/remote-access-api/
+     */
     server.registerTool(
         "getJobScm",
         {
@@ -54,7 +58,11 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
         }
     );
 
-    // ── getBuildScm ──────────────────────────────────────────────────────
+    /*
+     * ── getBuildScm ──────────────────────────────────────────────────────
+     * Jenkins API: GET /job/{name}/{buildNumber}/api/json (with SCM tree filter)
+     * @see https://www.jenkins.io/doc/book/using/remote-access-api/
+     */
     server.registerTool(
         "getBuildScm",
         {
@@ -94,7 +102,11 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
         }
     );
 
-    // ── getBuildChangeSets ───────────────────────────────────────────────
+    /*
+     * ── getBuildChangeSets ───────────────────────────────────────────────
+     * Jenkins API: GET /job/{name}/{buildNumber}/api/json (with changeSets tree filter)
+     * @see https://www.jenkins.io/doc/book/using/remote-access-api/
+     */
     server.registerTool(
         "getBuildChangeSets",
         {
@@ -128,7 +140,11 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
         }
     );
 
-    // ── findJobsWithScmUrl ───────────────────────────────────────────────
+    /*
+     * ── findJobsWithScmUrl ───────────────────────────────────────────────
+     * Jenkins API: GET /api/json (with recursive job tree filter)
+     * @see https://www.jenkins.io/doc/book/using/remote-access-api/
+     */
     server.registerTool(
         "findJobsWithScmUrl",
         {
