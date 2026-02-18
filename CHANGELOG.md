@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Jenkins API compatibility version in README documentation
 - Silent log level for winston logger and global test setup (`tests/unit/setup.ts`) to suppress logger output during unit tests
 
+### Documentation
+
+- Added HTTP transport usage section to README with CLI example, health check, and MCP endpoint details
+- Added Docker usage examples with `docker-compose.yml` snippet and `host.docker.internal` networking
+- Added MCP client configuration examples for HTTP transport (Claude Desktop, VS Code, Cursor)
+- Updated Configuration table with missing `--max-retries`, `--retry-delay`, `--transport`, and `--port` options
+- Updated comparison table to reflect HTTP transport support
+
 ## [0.2.3] - 2026-02-10
 
 ### Fixed
