@@ -6,7 +6,7 @@ A local MCP (Model Context Protocol) server for Jenkins that replicates the [Jen
 
 ## Why?
 
-The official Jenkins MCP Server Plugin must be installed on the Jenkins server. If you don't have admin rights to install plugins, `host-mcp-jenkins` gives you the same 16 MCP tools running locally, calling Jenkins REST API with your personal API token.
+The official Jenkins MCP Server Plugin must be installed on the Jenkins server. If you don't have admin rights to install plugins, `host-mcp-jenkins` gives you the same 17 MCP tools running locally, calling Jenkins REST API with your personal API token.
 
 ## Compatibility
 
@@ -81,7 +81,7 @@ npx @mister-good-deal/host-mcp-jenkins \
 This exposes:
 
 - **Health check:** `GET /health` → `{"status":"ok"}`
-- **MCP endpoint:** `POST /mcp` (Streamable HTTP)
+- **MCP endpoint:** `/mcp` (Streamable HTTP)
 - **Graceful shutdown** on `SIGINT` / `SIGTERM`
 
 ## Configuration
