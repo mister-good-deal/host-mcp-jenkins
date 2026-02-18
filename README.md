@@ -6,7 +6,7 @@ A local MCP (Model Context Protocol) server for Jenkins that replicates the [Jen
 
 ## Why?
 
-The official Jenkins MCP Server Plugin must be installed on the Jenkins server. If you don't have admin rights to install plugins, `host-mcp-jenkins` gives you the same 16 MCP tools running locally, calling Jenkins REST API with your personal API token.
+The official Jenkins MCP Server Plugin must be installed on the Jenkins server. If you don't have admin rights to install plugins, `host-mcp-jenkins` gives you the same 17 MCP tools running locally, calling Jenkins REST API with your personal API token.
 
 ## Compatibility
 
@@ -65,6 +65,25 @@ npx @mister-good-deal/host-mcp-jenkins \
   --jenkins-token your-api-token
 ```
 
+### HTTP Transport
+
+To start the server with Streamable HTTP transport instead of stdio:
+
+```bash
+npx @mister-good-deal/host-mcp-jenkins \
+  --jenkins-url https://jenkins.example.com \
+  --jenkins-user your-username \
+  --jenkins-token your-api-token \
+  --transport http \
+  --port 3000
+```
+
+This exposes:
+
+- **Health check:** `GET /health` → `{"status":"ok"}`
+- **MCP endpoint:** `/mcp` (Streamable HTTP)
+- **Graceful shutdown** on `SIGINT` / `SIGTERM`
+
 ## Configuration
 
 All options support both CLI arguments and environment variables (CLI takes precedence):
@@ -77,6 +96,10 @@ All options support both CLI arguments and environment variables (CLI takes prec
 | `--insecure` | `JENKINS_INSECURE=true` | | `false` | Skip TLS certificate verification |
 | `--log-level` | `LOG_LEVEL` | | `info` | `debug` \| `info` \| `warn` \| `error` |
 | `--timeout` | `JENKINS_TIMEOUT` | | `30000` | HTTP request timeout (ms) |
+| `--max-retries` | `JENKINS_MAX_RETRIES` | | `3` | Max retries for transient errors (429/5xx) |
+| `--retry-delay` | `JENKINS_RETRY_DELAY` | | `1000` | Base delay in ms for exponential backoff |
+| `--transport` | `MCP_TRANSPORT` | | `stdio` | Transport type (`stdio` \| `http`) |
+| `--port` | `MCP_PORT` | | `3000` | HTTP server port (only with `--transport http`) |
 
 ### Getting a Jenkins API Token
 
@@ -144,6 +167,55 @@ Add to your MCP server configuration:
 
 > **Note for contributors:** If you're running the MCP server from within this workspace (where `package.json` declares `"packageManager": "pnpm@..."`) and `npx` fails with `host-mcp-jenkins: not found`, use `pnpm dlx` instead. This happens because corepack intercepts `npx` when run from a pnpm-managed project.
 
+### HTTP Transport (Remote)
+
+When the server is running with `--transport http`, MCP clients can connect via HTTP URL instead of launching a subprocess:
+
+**Claude Desktop / VS Code / Cursor:**
+
+```json
+{
+  "mcpServers": {
+    "jenkins": {
+      "url": "http://localhost:3000/mcp"
+    }
+  }
+}
+```
+
+## Docker Usage
+
+HTTP transport enables AI agents running inside Docker containers to connect to the MCP server without needing an MCP gateway.
+
+### Running the MCP Server on the Host
+
+Start the server with HTTP transport on the host machine:
+
+```bash
+npx @mister-good-deal/host-mcp-jenkins \
+  --jenkins-url https://jenkins.example.com \
+  --jenkins-user your-username \
+  --jenkins-token your-api-token \
+  --transport http \
+  --port 3000
+```
+
+From inside a Docker container, connect to `http://host.docker.internal:3000/mcp`.
+
+### Docker Compose Example
+
+```yaml
+services:
+  ai-agent:
+    image: your-ai-agent:latest
+    environment:
+      MCP_SERVER_URL: "http://host.docker.internal:3000/mcp"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+```
+
+> **Note:** The `extra_hosts` mapping is required on Linux. On macOS and Windows, Docker Desktop resolves `host.docker.internal` automatically.
+
 ## Available Tools (17)
 
 Full parity with the [Jenkins MCP Server Plugin](https://github.com/jenkinsci/mcp-server-plugin), plus extras:
@@ -190,7 +262,7 @@ Full parity with the [Jenkins MCP Server Plugin](https://github.com/jenkinsci/mc
 | Feature | Jenkins Plugin | host-mcp-jenkins |
 |---|---|---|
 | Installation | Requires Jenkins admin | None — runs locally |
-| Transport | SSE, Streamable HTTP, Stateless | stdio (local) |
+| Transport | SSE, Streamable HTTP, Stateless | stdio (default), Streamable HTTP |
 | Authentication | Jenkins built-in | API token over HTTP Basic |
 | Tools | 16 | 17 (full parity + progressive log) |
 | Response format | `ToolResponse` envelope | Same `ToolResponse` envelope |
