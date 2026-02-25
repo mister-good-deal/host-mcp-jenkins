@@ -61,7 +61,7 @@ export function registerTestTools(server: McpServer, client: JenkinsClient): voi
                     },
                     TestResult: testResult
                 }));
-            } catch (error) {
+            } catch(error) {
                 if (error instanceof JenkinsClientError && error.statusCode === 404) {
                     const id = buildNumber ? `${jobFullName}#${buildNumber}` : `${jobFullName} (last build)`;
 
@@ -111,7 +111,7 @@ export function registerTestTools(server: McpServer, client: JenkinsClient): voi
                     },
                     TestResultWithFlakyFailures: flakyTests
                 }));
-            } catch (error) {
+            } catch(error) {
                 if (error instanceof JenkinsClientError && error.statusCode === 404) {
                     const id = buildNumber ? `${jobFullName}#${buildNumber}` : `${jobFullName} (last build)`;
 

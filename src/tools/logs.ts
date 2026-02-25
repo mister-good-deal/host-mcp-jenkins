@@ -98,7 +98,7 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
                 };
 
                 return toMcpResult(toolSuccess(response));
-            } catch (error) {
+            } catch(error) {
                 if (error instanceof JenkinsClientError && error.statusCode === 404) {
                     const id = buildNumber ? `${jobFullName}#${buildNumber}` : `${jobFullName} (last build)`;
 
@@ -146,7 +146,7 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
                     nextByteOffset,
                     moreData
                 }));
-            } catch (error) {
+            } catch(error) {
                 if (error instanceof JenkinsClientError && error.statusCode === 404) {
                     const id = buildNumber ? `${jobFullName}#${buildNumber}` : `${jobFullName} (last build)`;
 
@@ -237,7 +237,7 @@ export function registerLogTools(server: McpServer, client: JenkinsClient): void
                 };
 
                 return toMcpResult(toolSuccess(response));
-            } catch (error) {
+            } catch(error) {
                 if (error instanceof JenkinsClientError && error.statusCode === 404) {
                     const id = buildNumber ? `${jobFullName}#${buildNumber}` : `${jobFullName} (last build)`;
 

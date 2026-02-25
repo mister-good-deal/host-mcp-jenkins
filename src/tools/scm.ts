@@ -46,7 +46,7 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
                 if (configs.length === 0) return toMcpResult(toolEmpty("No SCM configurations found for this job."));
 
                 return toMcpResult(toolSuccess(configs));
-            } catch (error) {
+            } catch(error) {
                 if (error instanceof JenkinsClientError && error.statusCode === 404) {
                     return toMcpResult(toolNotFound("Job", jobFullName));
                 }
@@ -86,7 +86,7 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
                 if (configs.length === 0) return toMcpResult(toolEmpty("No SCM configurations found for this build."));
 
                 return toMcpResult(toolSuccess(configs));
-            } catch (error) {
+            } catch(error) {
                 if (error instanceof JenkinsClientError && error.statusCode === 404) {
                     const id = buildNumber ? `${jobFullName}#${buildNumber}` : `${jobFullName} (last build)`;
 
@@ -124,7 +124,7 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
                 });
 
                 return toMcpResult(toolSuccess(build.changeSets ?? []));
-            } catch (error) {
+            } catch(error) {
                 if (error instanceof JenkinsClientError && error.statusCode === 404) {
                     const id = buildNumber ? `${jobFullName}#${buildNumber}` : `${jobFullName} (last build)`;
 
@@ -196,7 +196,7 @@ export function registerScmTools(server: McpServer, client: JenkinsClient): void
                 if (paged.length === 0) return toMcpResult(toolEmpty("No jobs found matching the specified SCM URL."));
 
                 return toMcpResult(toolSuccess(paged));
-            } catch (error) {
+            } catch(error) {
                 if (error instanceof JenkinsClientError) {
                     return toMcpResult(toolEmpty(`Failed to search jobs: ${error.message}`));
                 }

@@ -35,7 +35,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                 const job = await client.get<JenkinsJob>(path, { tree });
 
                 return toMcpResult(toolSuccess(job));
-            } catch (error) {
+            } catch(error) {
                 if (error instanceof JenkinsClientError && error.statusCode === 404) {
                     return toMcpResult(toolNotFound("Job", jobFullName));
                 }
@@ -83,7 +83,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                 const paged = sorted.slice(skip, skip + limit);
 
                 return toMcpResult(toolSuccess(paged));
-            } catch (error) {
+            } catch(error) {
                 if (error instanceof JenkinsClientError && error.statusCode === 404) {
                     return toMcpResult(toolNotFound("Folder", parentFullName ?? "root"));
                 }
@@ -118,7 +118,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                 const build = await client.get<JenkinsBuild>(path, { tree });
 
                 return toMcpResult(toolSuccess(build));
-            } catch (error) {
+            } catch(error) {
                 if (error instanceof JenkinsClientError && error.statusCode === 404) {
                     const id = buildNumber ? `${jobFullName}#${buildNumber}` : `${jobFullName} (last build)`;
 
@@ -141,7 +141,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
             description: "Trigger a build for a Jenkins job",
             inputSchema: {
                 jobFullName: z.string().describe("Full name of the Jenkins job"),
-                parameters: z.record(z.unknown()).optional().
+                parameters: z.record(z.string(), z.unknown()).optional().
                     describe("Build parameters as key-value pairs")
             },
             annotations: { readOnlyHint: false }
@@ -183,7 +183,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                 }
 
                 return toMcpResult(toolSuccess(result.data, "Build triggered successfully."));
-            } catch (error) {
+            } catch(error) {
                 if (error instanceof JenkinsClientError && error.statusCode === 404) {
                     return toMcpResult(toolNotFound("Job", jobFullName));
                 }
@@ -230,7 +230,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                 }
 
                 return toMcpResult(toolSuccess(true, "Build updated successfully."));
-            } catch (error) {
+            } catch(error) {
                 if (error instanceof JenkinsClientError && error.statusCode === 404) {
                     const id = buildNumber ? `${jobFullName}#${buildNumber}` : `${jobFullName} (last build)`;
 
@@ -260,7 +260,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                 const user = await client.get<JenkinsUser>("/me/api/json");
 
                 return toMcpResult(toolSuccess({ fullName: user.fullName }));
-            } catch (error) {
+            } catch(error) {
                 return toMcpResult(toolError(error));
             }
         }
@@ -308,7 +308,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                 };
 
                 return toMcpResult(toolSuccess(status));
-            } catch (error) {
+            } catch(error) {
                 return toMcpResult(toolError(error));
             }
         }
@@ -336,7 +336,7 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
                 const item = await client.get<JenkinsQueueItem>(`/queue/item/${id}/api/json`, { tree });
 
                 return toMcpResult(toolSuccess(item));
-            } catch (error) {
+            } catch(error) {
                 if (error instanceof JenkinsClientError && error.statusCode === 404) {
                     return toMcpResult(toolNotFound("Queue item", String(id)));
                 }

@@ -226,7 +226,7 @@ export class JenkinsClient {
                 }
 
                 return response;
-            } catch (error) {
+            } catch(error) {
                 lastError = error;
 
                 // Don't retry AbortError (timeout) — the caller set an explicit timeout
