@@ -35,6 +35,20 @@ export const getBuildOutput = ToolResponseSchema.describe("Jenkins build details
 
 export const triggerBuildOutput = ToolResponseSchema.describe("Build trigger result with queue item");
 
+export const getReplayScriptsOutput = ToolResponseSchema.extend({
+    result: z.object({
+        mainScript: z.string(),
+        loadedScripts: z.record(z.string(), z.string())
+    }).describe("Pipeline scripts of the build")
+}).describe("Replayable Pipeline scripts");
+
+export const replayBuildOutput = ToolResponseSchema.extend({
+    result: z.object({
+        expectedBuildNumber: z.number().nullable(),
+        location: z.string().nullable()
+    }).describe("Next build number read before the submission, and the redirect location")
+}).describe("Replay submission result");
+
 export const updateBuildOutput = ToolResponseSchema.describe("Build update confirmation");
 
 export const whoAmIOutput = ToolResponseSchema.extend({
@@ -124,6 +138,8 @@ export const OUTPUT_SCHEMAS: Record<string, z.ZodType> = {
     getJobs: getJobsOutput,
     getBuild: getBuildOutput,
     triggerBuild: triggerBuildOutput,
+    getReplayScripts: getReplayScriptsOutput,
+    replayBuild: replayBuildOutput,
     updateBuild: updateBuildOutput,
     whoAmI: whoAmIOutput,
     getStatus: getStatusOutput,

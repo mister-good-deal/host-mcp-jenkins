@@ -34,7 +34,7 @@ src/
     types.ts        # Jenkins API type definitions
     utils.ts        # Shared utilities (pagination, tree parameter building)
   tools/
-    core.ts         # 8 tools: getJob, getJobs, getBuild, triggerBuild, updateBuild, whoAmI, getStatus, getQueueItem
+    core.ts         # 10 tools: getJob, getJobs, getBuild, triggerBuild, getReplayScripts, replayBuild, updateBuild, whoAmI, getStatus, getQueueItem
     logs.ts         # 3 tools: getBuildLog, getProgressiveBuildLog, searchBuildLog
     scm.ts          # 4 tools: getJobScm, getBuildScm, getBuildChangeSets, findJobsWithScmUrl
     tests.ts        # 2 tools: getTestResults, getFlakyFailures

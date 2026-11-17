@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `getReplayScripts` and `replayBuild` tools: read the Pipeline scripts of a build and replay it with a modified script (Jenkins replay action; requires the Pipeline: Groovy plugin and the Run/Replay permission)
 - `CLAUDE.md` with project context and conventions for AI-assisted development
 - Jenkins API compatibility version in README documentation
 - Silent log level for winston logger and global test setup (`tests/unit/setup.ts`) to suppress logger output during unit tests
