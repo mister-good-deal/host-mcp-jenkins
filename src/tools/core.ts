@@ -5,7 +5,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { JenkinsClient } from "../jenkins/client.js";
 import { JenkinsClientError } from "../jenkins/client.js";
 import type { JenkinsBuild, JenkinsComputerSet, JenkinsJob, JenkinsQueue, JenkinsQueueItem, JenkinsRootInfo, JenkinsUser } from "../jenkins/types.js";
-import { jobFullNameToPath } from "../jenkins/utils.js";
+import { jobFullNameToPath, parseReplayScripts } from "../jenkins/utils.js";
 import { getLogger } from "../logger.js";
 import { toMcpResult, toolError, toolFailure, toolNotFound, toolSuccess } from "../response.js";
 
@@ -186,6 +186,96 @@ export function registerCoreTools(server: McpServer, client: JenkinsClient): voi
             } catch(error) {
                 if (error instanceof JenkinsClientError && error.statusCode === 404) {
                     return toMcpResult(toolNotFound("Job", jobFullName));
+                }
+
+                return toMcpResult(toolError(error));
+            }
+        }
+    );
+
+    /*
+     * ── getReplayScripts ─────────────────────────────────────────────────
+     * Jenkins API: GET /job/{name}/{buildNumber}/replay/
+     * The replay action has no JSON API: the scripts are read from the textareas of its HTML form.
+     * @see https://www.jenkins.io/doc/book/pipeline/development/#replay
+     */
+    server.registerTool(
+        "getReplayScripts",
+        {
+            description: "Get the Pipeline scripts of a build as the replay action exposes them (main script and loaded " +
+              "scripts). Use it to fetch the script to edit before calling replayBuild.",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                buildNumber: z.number().int().optional().describe("Build number (omit for last build)")
+            },
+            annotations: { readOnlyHint: true }
+        },
+        async({ jobFullName, buildNumber }) => {
+            logger.debug(`getReplayScripts: ${jobFullName}#${buildNumber ?? "last"}`);
+
+            try {
+                const buildPath = buildNumber ? `/${buildNumber}` : "/lastBuild";
+                const html = await client.getText(`${jobFullNameToPath(jobFullName)}${buildPath}/replay/`);
+                const scripts = parseReplayScripts(html);
+
+                if (scripts.mainScript === undefined) {
+                    return toMcpResult(toolFailure("No replayable Pipeline script found on the replay page of this build."));
+                }
+
+                return toMcpResult(toolSuccess(scripts));
+            } catch(error) {
+                if (error instanceof JenkinsClientError && error.statusCode === 404) {
+                    const id = buildNumber ? `${jobFullName}#${buildNumber}` : `${jobFullName} (last build)`;
+
+                    return toMcpResult(toolNotFound("Replayable build", id));
+                }
+
+                return toMcpResult(toolError(error));
+            }
+        }
+    );
+
+    /*
+     * ── replayBuild ──────────────────────────────────────────────────────
+     * Jenkins API: POST /job/{name}/{buildNumber}/replay/run (form field `json`)
+     * @see https://www.jenkins.io/doc/book/pipeline/development/#replay
+     */
+    server.registerTool(
+        "replayBuild",
+        {
+            description: "Replay a Pipeline build with a modified script, without committing it. The new build runs the " +
+              "given script against the same revision and parameters as the replayed build.",
+            inputSchema: {
+                jobFullName: z.string().describe("Full name of the Jenkins job"),
+                buildNumber: z.number().int().optional().describe("Number of the build to replay (omit for last build)"),
+                mainScript: z.string().min(1).describe("Full Pipeline script (Jenkinsfile) to run"),
+                loadedScripts: z.record(z.string(), z.string()).optional().
+                    describe("Loaded scripts to override, keyed as returned by getReplayScripts")
+            },
+            annotations: { readOnlyHint: false }
+        },
+        async({ jobFullName, buildNumber, mainScript, loadedScripts }) => {
+            logger.debug(`replayBuild: ${jobFullName}#${buildNumber ?? "last"}`);
+
+            try {
+                const jobPath = jobFullNameToPath(jobFullName);
+                const buildPath = buildNumber ? `/${buildNumber}` : "/lastBuild";
+                const job = await client.get<JenkinsJob>(`${jobPath}/api/json`, { tree: "nextBuildNumber" });
+                const formData = new URLSearchParams();
+
+                formData.set("json", JSON.stringify({ ...loadedScripts, mainScript }));
+
+                const result = await client.post(`${jobPath}${buildPath}/replay/run`, formData);
+
+                return toMcpResult(toolSuccess(
+                    { expectedBuildNumber: job.nextBuildNumber ?? null, location: result.location },
+                    "Replay submitted. expectedBuildNumber is the job's next build number read before the submission."
+                ));
+            } catch(error) {
+                if (error instanceof JenkinsClientError && error.statusCode === 404) {
+                    const id = buildNumber ? `${jobFullName}#${buildNumber}` : `${jobFullName} (last build)`;
+
+                    return toMcpResult(toolNotFound("Replayable build", id));
                 }
 
                 return toMcpResult(toolError(error));

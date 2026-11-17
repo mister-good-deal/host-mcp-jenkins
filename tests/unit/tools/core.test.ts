@@ -198,4 +198,81 @@ describe("Core Tools", () => {
             expect(client.post).toHaveBeenCalledWith("/job/myJob/build");
         });
     });
+
+    describe("getReplayScripts", () => {
+        it("should extract the main and loaded scripts from the replay page", async() => {
+            client.getText.mockResolvedValueOnce(
+                "<form><textarea name=\"_.mainScript\" class=\"x\">node { echo &quot;a &lt; b &amp;&amp; c&#39;s&quot; }</textarea>" +
+                "<textarea name=\"_.Script1\">def f() {}</textarea><textarea name=\"other\">ignored</textarea></form>"
+            );
+
+            const handler = toolHandlers.get("getReplayScripts")!;
+            const response = extractToolResponse(await handler({ jobFullName: "folder/myJob", buildNumber: 7 }) as never);
+
+            expect(response.status).toBe("COMPLETED");
+            expect(response.result).toEqual({
+                mainScript: "node { echo \"a < b && c's\" }",
+                loadedScripts: { Script1: "def f() {}" }
+            });
+            expect(client.getText).toHaveBeenCalledWith("/job/folder/job/myJob/7/replay/");
+        });
+
+        it("should fail when the page has no main script", async() => {
+            client.getText.mockResolvedValueOnce("<html>no form</html>");
+
+            const handler = toolHandlers.get("getReplayScripts")!;
+            const response = extractToolResponse(await handler({ jobFullName: "myJob" }) as never);
+
+            expect(response.status).toBe("FAILED");
+            expect(client.getText).toHaveBeenCalledWith("/job/myJob/lastBuild/replay/");
+        });
+
+        it("should report a build that cannot be replayed", async() => {
+            client.getText.mockRejectedValueOnce(make404());
+
+            const handler = toolHandlers.get("getReplayScripts")!;
+            const response = extractToolResponse(await handler({ jobFullName: "myJob", buildNumber: 3 }) as never);
+
+            expect(response.status).toBe("FAILED");
+            expect(response.message).toContain("myJob#3");
+        });
+    });
+
+    describe("replayBuild", () => {
+        it("should submit the scripts and return the expected build number", async() => {
+            client.get.mockResolvedValueOnce({ nextBuildNumber: 8 });
+            client.post.mockResolvedValueOnce({ data: null, location: "https://jenkins.example.com/job/myJob/" });
+
+            const handler = toolHandlers.get("replayBuild")!;
+            const response = extractToolResponse(await handler({
+                jobFullName: "myJob",
+                buildNumber: 7,
+                mainScript: "node { echo 'x' }",
+                loadedScripts: { Script1: "def f() {}" }
+            }) as never);
+
+            expect(response.status).toBe("COMPLETED");
+            expect(response.result).toEqual({ expectedBuildNumber: 8, location: "https://jenkins.example.com/job/myJob/" });
+            expect(client.get).toHaveBeenCalledWith("/job/myJob/api/json", { tree: "nextBuildNumber" });
+
+            const [path, body] = client.post.mock.calls[0];
+
+            expect(path).toBe("/job/myJob/7/replay/run");
+            expect(JSON.parse((body as URLSearchParams).get("json")!)).toEqual({
+                Script1: "def f() {}",
+                mainScript: "node { echo 'x' }"
+            });
+        });
+
+        it("should report a build that cannot be replayed", async() => {
+            client.get.mockResolvedValueOnce({ nextBuildNumber: 8 });
+            client.post.mockRejectedValueOnce(make404());
+
+            const handler = toolHandlers.get("replayBuild")!;
+            const response = extractToolResponse(await handler({ jobFullName: "myJob", mainScript: "node {}" }) as never);
+
+            expect(response.status).toBe("FAILED");
+            expect(response.message).toContain("last build");
+        });
+    });
 });

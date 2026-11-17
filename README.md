@@ -6,7 +6,7 @@ A local MCP (Model Context Protocol) server for Jenkins that replicates the [Jen
 
 ## Why?
 
-The official Jenkins MCP Server Plugin must be installed on the Jenkins server. If you don't have admin rights to install plugins, `host-mcp-jenkins` gives you the same 17 MCP tools running locally, calling Jenkins REST API with your personal API token.
+The official Jenkins MCP Server Plugin must be installed on the Jenkins server. If you don't have admin rights to install plugins, `host-mcp-jenkins` gives you the same 17 MCP tools (plus Pipeline replay) running locally, calling Jenkins REST API with your personal API token.
 
 ## Compatibility
 
@@ -22,11 +22,12 @@ The official Jenkins MCP Server Plugin must be installed on the Jenkins server. 
 
 ### Plugin Dependencies
 
-Most tools (11 out of 17) use only the Jenkins core REST API and require no plugins. Some tool categories depend on specific plugins:
+Most tools (11 out of 19) use only the Jenkins core REST API and require no plugins. Some tool categories depend on specific plugins:
 
 | Tools | Required Plugin | Min Plugin Version | Notes |
 |---|---|:---:|---|
 | `getJobScm`, `getBuildScm`, `findJobsWithScmUrl` | [Git Plugin](https://plugins.jenkins.io/git/) | 2.0+ | SCM data exposed via Git plugin actions |
+| `getReplayScripts`, `replayBuild` | [Pipeline: Groovy](https://plugins.jenkins.io/workflow-cps/) | 2.0+ | Pipeline jobs only; needs the Run/Replay permission |
 | `getTestResults` | [JUnit Plugin](https://plugins.jenkins.io/junit/) | 1.0+ | Bundled with Jenkins since 1.577 |
 | `getFlakyFailures` | [JUnit Plugin](https://plugins.jenkins.io/junit/) | 1.33+ | Flaky test detection support required |
 
@@ -42,6 +43,8 @@ Every tool maps to one or more Jenkins REST API endpoints. All JSON endpoints su
 | `getJobs` | GET | `/api/json` | Core |
 | `getBuild` | GET | `/job/{name}/{build\|lastBuild}/api/json` | Core |
 | `triggerBuild` | POST | `/job/{name}/build`, `/job/{name}/buildWithParameters` | Core |
+| `getReplayScripts` | GET | `/job/{name}/{build\|lastBuild}/replay/` (HTML form) | Pipeline: Groovy |
+| `replayBuild` | POST | `/job/{name}/{build\|lastBuild}/replay/run` | Pipeline: Groovy |
 | `updateBuild` | POST | `/job/{name}/{build}/submitDescription`, `configSubmit` | Core |
 | `whoAmI` | GET | `/me/api/json` | Core |
 | `getStatus` | GET | `/api/json`, `/computer/api/json`, `/queue/api/json` | Core |
@@ -216,11 +219,11 @@ services:
 
 > **Note:** The `extra_hosts` mapping is required on Linux. On macOS and Windows, Docker Desktop resolves `host.docker.internal` automatically.
 
-## Available Tools (17)
+## Available Tools (19)
 
 Full parity with the [Jenkins MCP Server Plugin](https://github.com/jenkinsci/mcp-server-plugin), plus extras:
 
-### Core (8)
+### Core (10)
 
 | Tool | Description |
 |---|---|
@@ -228,6 +231,8 @@ Full parity with the [Jenkins MCP Server Plugin](https://github.com/jenkinsci/mc
 | `getJobs` | Get a paginated list of Jenkins jobs, sorted by name |
 | `getBuild` | Get a specific build or the last build of a Jenkins job |
 | `triggerBuild` | Trigger a build for a Jenkins job (supports parameters) |
+| `getReplayScripts` | Get the Pipeline scripts of a build as its replay action exposes them |
+| `replayBuild` | Replay a Pipeline build with a modified script, without committing it |
 | `updateBuild` | Update build display name and/or description |
 | `whoAmI` | Get information about the currently authenticated user |
 | `getStatus` | Check the health and readiness status of a Jenkins instance |
@@ -264,7 +269,7 @@ Full parity with the [Jenkins MCP Server Plugin](https://github.com/jenkinsci/mc
 | Installation | Requires Jenkins admin | None — runs locally |
 | Transport | SSE, Streamable HTTP, Stateless | stdio (default), Streamable HTTP |
 | Authentication | Jenkins built-in | API token over HTTP Basic |
-| Tools | 16 | 17 (full parity + progressive log) |
+| Tools | 16 | 19 (full parity + progressive log + Pipeline replay) |
 | Response format | `ToolResponse` envelope | Same `ToolResponse` envelope |
 | `tree` parameter | Via internal API | Forwarded to REST API |
 

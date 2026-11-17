@@ -23,3 +23,36 @@ export function buildQueryString(params: Record<string, string | number | boolea
 
     return parts.length > 0 ? `?${parts.join("&")}` : "";
 }
+
+const HTML_ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'" };
+
+function decodeHtmlEntities(text: string): string {
+    return text.replace(/&(?:#(\d+)|#x([0-9a-fA-F]+)|(\w+));/g, (entity, dec?: string, hex?: string, name?: string) => {
+        if (dec) return String.fromCodePoint(Number(dec));
+
+        if (hex) return String.fromCodePoint(parseInt(hex, 16));
+
+        return HTML_ENTITIES[name!] ?? entity;
+    });
+}
+
+/**
+ * Extracts the Pipeline scripts from the HTML form of the replay action
+ * (`/job/{name}/{build}/replay/`), which has no JSON API. Each script is a
+ * `<textarea name="_.{key}">`; the key `mainScript` is the Jenkinsfile.
+ */
+export function parseReplayScripts(html: string): { mainScript?: string; loadedScripts: Record<string, string> } {
+    const loadedScripts: Record<string, string> = {};
+    let mainScript: string | undefined;
+
+    for (const [, attributes, content] of html.matchAll(/<textarea\b([^>]*)>([\s\S]*?)<\/textarea>/g)) {
+        const key = (/\bname="_\.([^"]+)"/).exec(attributes)?.[1];
+
+        if (key === undefined) continue;
+
+        if (key === "mainScript") mainScript = decodeHtmlEntities(content);
+        else loadedScripts[key] = decodeHtmlEntities(content);
+    }
+
+    return { mainScript, loadedScripts };
+}

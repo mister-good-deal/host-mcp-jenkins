@@ -11,6 +11,7 @@ export interface JenkinsJob {
     buildable?: boolean;
     builds?: JenkinsBuild[];
     lastBuild?: JenkinsBuild | null;
+    nextBuildNumber?: number;
     lastSuccessfulBuild?: JenkinsBuild | null;
     lastFailedBuild?: JenkinsBuild | null;
     healthReport?: JenkinsHealthReport[];
